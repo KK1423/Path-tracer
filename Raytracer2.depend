@@ -1,0 +1,26 @@
+# depslib dependency file v1.0
+1422927126 source:c:\users\karth_000\skydrive\google drive\raytracer2\main.cpp
+	<iostream>
+	<stdlib.h>
+	<math.h>
+	<time.h>
+	<iostream>
+	<fstream>
+	<thread>
+	<mutex>
+	<atomic>
+
+1423360680 source:c:\users\karth_000\documents\github\applied-tech\raytracer2\main.cpp
+	<iostream>
+	<stdlib.h>
+	<math.h>
+	<time.h>
+	<iostream>
+	<fstream>
+	<thread>
+	<mutex>
+	<atomic>
+
+1423360062 source:c:\users\karth_000\documents\github\applied-tech\raytracer2\resources.rc
+	<windows.h>
+

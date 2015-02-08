@@ -1,0 +1,38 @@
+#include <windows.h>
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+VS_VERSION_INFO    VERSIONINFO
+  FILEVERSION      3,3,0,1
+  PRODUCTVERSION   3,0,0,1
+  FILEFLAGSMASK    0x3fL // VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+  FILEFLAGS        0x1L  // VS_FF_DEBUG|VS_FF_PRIVATEBUILD|VS_FF_PRERELEASE
+#else
+  FILEFLAGS        0x0L  // final version
+#endif
+  FILEOS           VOS_NT_WINDOWS32
+  FILETYPE         VFT_APP
+  FILESUBTYPE      VFT2_UNKNOWN // not used
+{
+  BLOCK "StringFileInfo"
+  {
+    BLOCK "040904E4" // Lang=US English, CharSet=Windows Multilingual
+    {
+      VALUE "CompanyName",      "Karthik Karyamapudi\0"
+      VALUE "FileDescription",  "Path Tracer implementing Global Illumination. \n Run and type in number of samples. \n Outputs a .ppm file.\0"
+      VALUE "FileVersion",      "R3\0"
+      VALUE "InternalName",     "Raytracer2\0"
+      VALUE "LegalCopyright",   "Use freely.\0"
+      VALUE "LegalTrademarks",  "Source: http://goo.gl/qECLYI\0"
+      VALUE "OriginalFilename", "Raytracer2.exe\0"
+      VALUE "PrivateBuild",     "\0"
+      VALUE "ProductName",      "MINITRACER\0"
+      VALUE "ProductVersion",   "R3\0"
+      VALUE "SpecialBuild",     "\0"
+    } // BLOCK "040904E4"
+  } // BLOCK "StringFileInfo"
+  BLOCK "VarFileInfo"
+  {
+    VALUE "Translation", 0x409, 1252 // 1252 = 0x04E4
+  } // BLOCK "VarFileInfo"
+}
