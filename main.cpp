@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+//#include <x86intrin.h>
 #define Triangle = 4;
 #define pi = 3.14159;
 using namespace std;
