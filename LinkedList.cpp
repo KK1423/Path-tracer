@@ -13,6 +13,26 @@ public:
         }
         data = *a;
     }
+    void die(listnode<TYPE>** startptr,listnode<TYPE>** endptr)
+    {
+        if(nextnode!=0)
+        {
+            nextnode->lastnode = lastnode;
+        }
+        else
+        {
+            *endptr = lastnode;
+        }
+        if(lastnode!=0)
+        {
+            lastnode->nextnode = nextnode;
+        }
+        else
+        {
+            *startptr = nextnode;
+        }
+        delete this;
+    }
 };
 template<class TYPE> class LinkedList
 {
@@ -37,7 +57,8 @@ public:
                     traverse = traverse->nextnode;
                 }
                 endptr = traverse;
-            }else
+            }
+            else
             {
                 traverse = endptr;
             }
@@ -56,5 +77,33 @@ public:
             traverse = traverse->nextnode;
         }
         return traverse;
+    }
+    TYPE* getArray(TYPE delim)
+    {
+        int memberCount = 0;
+        listnode<TYPE>* traverse = startptr;
+        if(traverse!=0)memberCount++;
+        else
+        {
+            TYPE *fail = new TYPE;
+            *fail = delim;
+            return fail;
+        }
+        while(traverse->nextnode!=0)
+        {
+            traverse = traverse->nextnode;
+            memberCount++;
+        }
+        TYPE *outArray = new TYPE[memberCount+1];
+        outArray[memberCount] = delim;
+        traverse = startptr;
+        memberCount = 0;
+        while(traverse!=0)
+        {
+            outArray[memberCount] = traverse->data;
+            traverse = traverse->nextnode;
+            memberCount++;
+        }
+        return outArray;
     }
 };

@@ -142,6 +142,15 @@ public:
         rsqr = r*r;
     };
 };
+class Triangle
+{
+public:
+    float r,rsqr;
+    d3Vector a,b,c;
+    Material material;
+    Triangle() {};
+    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),m(m_){};
+};
 class Scene
 {
 public:
@@ -149,12 +158,10 @@ public:
     int recipjitter = 3200;
     Sphere* spherepointer;
     int spherenum;
+    Triangle* trianglepointer;
+    int trianglenum;
     d3Vector ambientcolor;
-    Scene(int sphereQuantity,Sphere* spheres)
-    {
-        spherenum = sphereQuantity;
-        spherepointer = spheres;
-    }
+    Scene(int sphereQuantity,Sphere* spheres, int trianglenum_, Triangle* triangles):spherenum(sphereQuantity),spherepointer(spheres),trianglepointer(triangles),trianglenum(trianglenum_){}
 };
 struct hitdata
 {
@@ -246,6 +253,7 @@ public:
         return lowesthit;
     }
 };
+#include "FileLoader.cpp"
 int p;
 int *g_seed = new int(clock()*p);
  int getsignedrand() {
