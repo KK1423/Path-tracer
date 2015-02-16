@@ -8,7 +8,6 @@
 #include <mutex>
 #include <atomic>
 //#include <x86intrin.h>
-#define Triangle = 4;
 #define pi = 3.14159;
 using namespace std;
 class Material
@@ -149,7 +148,7 @@ public:
     d3Vector a,b,c;
     Material material;
     Triangle() {};
-    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),m(m_){};
+    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_){};
 };
 class Scene
 {
@@ -196,16 +195,13 @@ public:
         orgin = orgin.add(cize.O);
         return ray(orgin,endpt.subtract(orgin));
     }
-    hitdata intersectwith(Sphere sphere)
+    inline float intersectwith(Sphere &sphere)
     {
 
         float t = V.dot(sphere.pos.subtract(O));
-        hitdata outdata;
-        outdata.hit = false;
-        outdata.t = 110;
         if(t<=0)
         {
-            return outdata;
+            return 0.0;
         }
         float distnce = (V.normalize().scalarmultiply(t).subtract(sphere.pos.subtract(O))).magnitudesq();
         if(distnce<sphere.rsqr)
@@ -222,34 +218,35 @@ public:
                     return outdata;
                 }
             }*/
-            outdata.hit = true;
-            outdata.t = t-deltaT;
+            return t-deltaT;
+        }else
+        {
+            return 0.0;
         }
-        return outdata;
     }
     hitdata intersectwith(Scene scene)
     {
         float lowestt = 1005;
-        hitdata lowesthit;
-        hitdata hitcache;
-        Sphere hitsphere;
-        lowesthit.hit = false;
+        float hitcache;
+        Sphere * hitsphere;
         Sphere * sphereptr = scene.spherepointer;
-        while(sphereptr!=0)
+        while(sphereptr)
         {
-            hitcache = intersectwith(Sphere(*sphereptr));
-            if(hitcache.hit)
-            if(hitcache.t<lowestt)
+            hitcache = intersectwith(*sphereptr);
+            if(hitcache)
+            if(hitcache<lowestt)
             {
-                lowesthit=hitcache;
-                lowestt=hitcache.t;
-                hitsphere = *sphereptr;
+                lowestt=hitcache;
+                hitsphere = sphereptr;
             }
             sphereptr = sphereptr->nextsphere;
         }
-        lowesthit.material = hitsphere.material;
+        hitdata lowesthit;
+        if(lowestt==1005){lowesthit.hit = false;return lowesthit;};
+        lowesthit.hit = true;
+        lowesthit.material = hitsphere->material;
         lowesthit.coord = O.add(V.scalarmultiply(lowestt));
-        lowesthit.normal = lowesthit.coord.subtract(hitsphere.pos).normalize();//.scalarmultiply(deltaT<0?-1:1);
+        lowesthit.normal = lowesthit.coord.subtract(hitsphere->pos).normalize();//.scalarmultiply(deltaT<0?-1:1);
         return lowesthit;
     }
 };
@@ -377,7 +374,7 @@ Scene generateScene ()
         spheres[i]->nextsphere = spheres[i+1];
     }
     spheres[5]->nextsphere = 0;
-    Scene proto(4,spheres[0]);
+    Scene proto(4,spheres[0],0,0);
     return proto;
 
 }
