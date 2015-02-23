@@ -78,6 +78,10 @@ public:
         }
         return traverse;
     }
+    TYPE getData(int index)
+    {
+        return getNode(index)->data;
+    }
     TYPE* getArray(TYPE delim)
     {
         int memberCount = 0;
