@@ -141,5 +141,5 @@ Scene readFile (string filename)
         }
     }
     cout<<"triangle count: "<<tricount<<endl;
-    return Scene(0,0,0,tris.getArray(Triangle(0)));
+    return Scene(0,0,tricount,tris.getArray(Triangle(0)));
 }

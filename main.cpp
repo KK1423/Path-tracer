@@ -141,10 +141,36 @@ public:
         rsqr = r*r;
     };
 };
+d3Vector max(d3Vector a, d3Vector b)
+{
+    if(a.x<b.x)
+        a.x = b.x;
+    if(a.y<b.y)
+        a.y = b.y;
+    if(a.z<b.z)
+        a.z = b.z;
+    return a;
+}
+d3Vector min(d3Vector a, d3Vector b)
+{
+    if(a.x>b.x)
+        a.x = b.x;
+    if(a.y>b.y)
+        a.y = b.y;
+    if(a.z>b.z)
+        a.z = b.z;
+    return a;
+}
+class TriBVHData
+{
+    d3Vector ma,mi;
+    d3Vector center;
+    TriBVHData(){};
+};
 class Triangle
 {
 public:
-    float r,rsqr;
+    TriBVHData* BVHdata;
     d3Vector a,b,c;
     Material material;
     bool notnullflag = true;
@@ -153,7 +179,17 @@ public:
     {
         notnullflag = false;
     };
-    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_) {};
+    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_)
+    {
+
+        BVHdata = new TriBVHData;
+        BVHdata->center = (a.add(b).add(c)).scalarmultiply(0.333333333333);
+
+    };
+    float surfaceArea()
+    {
+        return 0.5*(((b.subtract(a)).crossproduct(c.subtract(a))).magnitude());
+    }
 };
 class Scene
 {
@@ -545,7 +581,7 @@ int main(int argv,char* argc[])
     //if(samples == 1){
     //  system("start Raytracer2.exe");return 0;}
 
-   /* Scene sce(0,0,0,0);
+    Scene sce(0,0,0,0);
     if(argv>=2)
     {
         sce = generateScene(argc[1]);
@@ -554,8 +590,8 @@ int main(int argv,char* argc[])
     {
         cout<<"404: File Not Found"<<endl;
         return 0;
-    }*/
-    Scene sce = generateScene("tracercube.obj");
+    }
+    //Scene sce = generateScene("tracercube.obj");
     int samples;
     cin>>samples;
     sce.recipjitter = 400000000000;
@@ -579,7 +615,7 @@ int main(int argv,char* argc[])
     float t = 0;
     while (sce.passnumber<samples)
     {
-        cout<<"\r\r"<<clock()-t<<endl;
+        cout<<"\r"<<clock()-t<<"  ";
         t = clock();
         p = sce.passnumber;
         thread section2(computeSection,501,1299,0,500,regimage,sce);
@@ -593,7 +629,7 @@ int main(int argv,char* argc[])
         sce2.passnumber++;
         sce3.passnumber++;
         sce4.passnumber++;
-        cout<<sce.passnumber<<endl;
+        cout<<sce.passnumber;
     }
     dump(regimage,1299,999);
     return 0;

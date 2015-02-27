@@ -111,3 +111,7 @@ public:
         return outArray;
     }
 };
+Sorttris(Triangle* arrstart, float (*getattribute)(Triangle))
+{
+
+}
