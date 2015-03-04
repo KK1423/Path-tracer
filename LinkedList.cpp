@@ -111,7 +111,7 @@ public:
         return outArray;
     }
 };
-void swap(Triangle &a,Triangle &b)
+inline void swap(Triangle &a,Triangle &b)
 {
     Triangle tmp = a;
     a = b;

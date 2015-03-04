@@ -77,16 +77,19 @@ public:
         result = d3Vector((x)*coefficients.x,(y)*coefficients.y,(z)*coefficients.z);
         return result;
     }
-    float get(int &a)
+    float get(int a)
     {
         switch(a)
         {
         case 1:
             return this->x;
+            break;
         case 2:
             return this->y;
+            break;
         case 3:
             return this->z;
+            break;
         }
     }
     float dot(d3Vector b)
@@ -269,21 +272,27 @@ public:
     Triangle* array = 0;
     BVHNode(Triangle* in, int length)
     {
-        if(length<3)
+        if(length<=5)
         {
             isleaf = true;
             array = in;
             l = length;
+            return;
         }
         d3Vector mi = minimum(in,length);
         d3Vector ma = maximum(in,length);
         d3Vector d = ma.subtract(mi);
-        int axis = (d.x>d.y&&d.x>d.z)?(1):((d.y>d.x&&d.y>d.z)?(2):(3));
+        d3Vector a(d);
+        if(a.x<0)a.x*=-1;
+        if(a.y<0)a.y*=-1;
+        if(a.z<0)a.z*=-1;
+        int axis = (a.x>a.y&&a.x>a.z)?(1):((a.y>a.x&&a.y>a.z)?(2):(3));
+        d = d.scalarmultiply(0.5);
+        d = d.add(mi);
+        float comparision = d.get(axis);
         Sorttris(in,axis == 1?(getx):((axis == 2)?(gety):(getz)));
-        float comparision = (mi.add(d.scalarmultiply(0.5))).get(axis);
-        int i = 0;
-        while(in[i++].BVHdata->center.get(axis)){};
-        i--;
+        int i=0;
+        while(in[i].BVHdata->center.get(axis)<comparision)i++;
         left = new BVHNode(in,i);
         right = new BVHNode(in+i,length-i);
     }
@@ -304,6 +313,7 @@ public:
         while(a->notnullflag)
         {count++;
         a++;}
+        //count--;
         root = new BVHNode(in.trianglepointer,count);
     }
 };
