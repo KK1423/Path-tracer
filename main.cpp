@@ -77,6 +77,18 @@ public:
         result = d3Vector((x)*coefficients.x,(y)*coefficients.y,(z)*coefficients.z);
         return result;
     }
+    float get(int a)
+    {
+        switch(a)
+        {
+        case 1:
+            return x;
+        case 2:
+            return y;
+        case 3:
+            return z;
+        }
+    }
     float dot(d3Vector b)
     {
         return ((x*b.x)+(y*b.y)+(z*b.z));
@@ -151,6 +163,10 @@ d3Vector max(d3Vector a, d3Vector b)
         a.z = b.z;
     return a;
 }
+d3Vector max(d3Vector a, d3Vector b,d3Vector c)
+{
+    return max(a,max(b,c));
+}
 d3Vector min(d3Vector a, d3Vector b)
 {
     if(a.x>b.x)
@@ -161,8 +177,13 @@ d3Vector min(d3Vector a, d3Vector b)
         a.z = b.z;
     return a;
 }
+d3Vector min(d3Vector a, d3Vector b,d3Vector c)
+{
+    return min(a,min(b,c));
+}
 class TriBVHData
 {
+public:
     d3Vector ma,mi;
     d3Vector center;
     TriBVHData(){};
@@ -184,6 +205,8 @@ public:
 
         BVHdata = new TriBVHData;
         BVHdata->center = (a.add(b).add(c)).scalarmultiply(0.333333333333);
+        BVHdata->ma = max(a,b,c);
+        BVHdata->mi = min(a,b,c);
 
     };
     float surfaceArea()
@@ -202,6 +225,80 @@ public:
     int trianglenum;
     d3Vector ambientcolor;
     Scene(int sphereQuantity,Sphere* spheres, int trianglenum_, Triangle* triangles):spherenum(sphereQuantity),spherepointer(spheres),trianglepointer(triangles),trianglenum(trianglenum_) {}
+};
+
+float* getx(Triangle &a)
+{
+    return &(a.BVHdata->center.x);
+}
+float* gety(Triangle &a)
+{
+    return &(a.BVHdata->center.y);
+}
+float* getz(Triangle &a)
+{
+    return &(a.BVHdata->center.z);
+}
+d3Vector maximum(Triangle* a,int length)
+{
+    d3Vector out = a->BVHdata->ma;
+    for(int i=1;i<length;i++)
+    {
+        out = max(out,a[i].BVHdata->ma);
+    }
+    return out;
+}
+d3Vector minimum(Triangle* a,int length)
+{
+    d3Vector out = a->BVHdata->mi;
+    for(int i=1;i<length;i++)
+    {
+        out = min(out,a[i].BVHdata->mi);
+    }
+    return out;
+}
+#include "LinkedList.cpp"
+class BVHNode
+{
+public:
+    BVHNode* left = 0;
+    BVHNode* right = 0;
+    d3Vector ma,mi;
+    bool isleaf = false;
+    Triangle* array = 0;
+    BVHNode(Triangle* in, int length)
+    {
+        if(length<3)
+        {
+            isleaf = true;
+            array = in;
+        }
+        d3Vector mi = minimum(in,length);
+        d3Vector ma = maximum(in,length);
+        d3Vector d = ma.subtract(mi);
+        int axis = (d.x>d.y&&d.x>d.z)?(1):((d.y>d.x&&d.y>d.z)?(2):(3));
+        Sorttris(in,axis == 1?(getx):((axis == 2)?(gety):(getz)));
+        float comparision = (mi.add(d.scalarmultiply(0.5))).get(axis);
+        int i = 0;
+        while(in[i++].BVHdata->center.get(axis)){};
+        i--;
+        left = new BVHNode(in,i);
+        right = new BVHNode(in+i,length-i);
+    }
+};
+class BVH
+{
+public:
+    Sphere* spherepointer;
+    BVHNode* root = 0;
+    BVH(Scene &in)
+    {
+        spherepointer = in.spherepointer;
+        int count = 0;
+        Triangle* a = in.trianglepointer;
+        while((a++)->notnullflag)count++;
+        root = new BVHNode(in.trianglepointer,count);
+    }
 };
 struct hitdata
 {
@@ -291,7 +388,7 @@ public:
             if(hitcache)
                 if(hitcache<lowestt)
                 {
-                    lowestt=hitcache;
+                    lowestt = hitcache;
                     hitsphere = sphereptr;
                 }
             sphereptr = sphereptr->nextsphere;
@@ -328,6 +425,95 @@ public:
         }
         //lowesthit.material.diffuseglossy = sphere?1:0;
         return lowesthit;
+    }
+    bool intersectwith(d3Vector mi,d3Vector ma)
+    {
+        float temp;
+        float tmin = (mi.x-O.x)/V.x;
+        float tmax = (ma.x-O.x)/V.x;
+        if(tmin>tmax)
+        {
+            temp = tmax;
+            tmax = tmin;
+            tmin = temp;
+        }
+        float tymin = (mi.y-O.y)/V.y;
+        float tymax = (ma.y-O.y)/V.y;
+        if(tymin>tymax)
+        {
+            temp = tymax;
+            tymax = tymin;
+            tymin = temp;
+        }
+        if((tmin>tymax)||(tymin>tmax)) return false;
+        if(tymin>tmin)tmin = tymin;
+        if(tymax<tmax)tmax = tymax;
+        float tzmin = (mi.z-O.z)/V.z;
+        float tzmax = (ma.z-O.z)/V.z;
+        if (tzmin > tzmax)
+        {
+            temp = tzmax;
+            tzmax = tzmin;
+            tzmin = temp;
+        }
+        if ((tmin > tzmax) || (tzmin > tmax))return false;
+        if (tzmin > tmin)tmin = tzmin;
+        if (tzmax < tmax)tmax = tzmax;
+        if (tmax <= 0) return false;
+        return true;
+    }
+    hitdata intersectwith(BVHNode &in)
+    {
+        if(in.isleaf)
+        {
+
+        }
+        if(intersectwith(in.left->mi,in.left->ma))
+        {
+            intersectwith(*in.left);
+        }
+        if(intersectwith(in.right->mi,in.right->ma))
+        {
+            intersectwith(*in.right);
+        }
+    }
+    hitdata intersectwith(BVH &in)
+    {
+        Sphere* sphereptr = in.spherepointer;
+        Sphere* hitsphere = 0;
+        float lowestt = 1005;
+        float hitcache;
+        while(sphereptr)
+        {
+            hitcache = intersectwith(*sphereptr);
+            if(hitcache)
+                if(hitcache<lowestt)
+                {
+                    lowestt = hitcache;
+                    hitsphere = sphereptr;
+                }
+            sphereptr = sphereptr->nextsphere;
+        }
+        hitdata BVHhit = intersectwith(*in.root);
+        if(hitsphere == 0&&!BVHhit.hit)
+        {
+            hitdata f;
+            f.hit =false;
+            return f;
+        }
+        if(lowestt<BVHhit.t&&hitsphere!=0)
+        {
+            hitdata spherehit;
+            spherehit.coord = O.add(V.scalarmultiply(lowestt));
+            spherehit.hit = true;
+            spherehit.normal = spherehit.coord.subtract(hitsphere->pos).normalize();
+            spherehit.material = hitsphere->material;
+            return spherehit;
+        }
+        if(lowestt>BVHhit.t&&BVHhit.hit)
+        {
+            return BVHhit;
+        }
     }
 };
 #include "FileLoader.cpp"
@@ -420,10 +606,6 @@ d3Vector diffusevec(d3Vector normal)
 }
 d3Vector get_diffuse_color(int depth,hitdata objecthit,ray cameraray,Scene scen)
 {
-    /*if(objecthit.normal.dot(cameraray.V)<0)
-    {
-        objecthit.normal = objecthit.normal.scalarmultiply(-1);
-    }*/
     return trace(ray(objecthit.coord,diffusevec(objecthit.normal)),scen,depth-1).individualmultiply((getcolor(objecthit.material)).scalarmultiply(1/255.0));
 }
 d3Vector get_glossy_color(int depth,hitdata objecthit,ray cameraray,Scene scen)
@@ -449,7 +631,6 @@ d3Vector get_transmit_color(int depth,hitdata objecthit,ray cameraray,Scene scen
     if(cosI<0)
     {
         cosI = -cosI;
-        //if(depth == 9)cout<<((objecthit.coord.x)>5?"true":"false")<<endl;
     }
     else
     {
@@ -578,6 +759,28 @@ void computeSection(int xstart,int xend, int ystart, int yend,d3Vector **opImage
 }
 int main(int argv,char* argc[])
 {
+    Scene sce = generateScene("tracercube.obj");
+    Triangle* tris = sce.trianglepointer;
+    Sorttris(tris,getx);
+    for(int i = 0; i<300; i++)
+    {
+        cout<<*getx(tris[i])<<endl;
+        if(i!=299)
+            if(*getx(tris[i+1])>=*getx(tris[i]))
+        {
+
+        }else
+        {
+         cout<<"fail";
+        }
+    }
+    int a;
+    cin>>a;
+    return 0;
+}
+/*
+int main(int argv,char* argc[])
+{
     //if(samples == 1){
     //  system("start Raytracer2.exe");return 0;}
 
@@ -633,4 +836,4 @@ int main(int argv,char* argc[])
     }
     dump(regimage,1299,999);
     return 0;
-}
+}*/

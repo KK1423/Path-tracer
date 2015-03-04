@@ -111,7 +111,51 @@ public:
         return outArray;
     }
 };
-Sorttris(Triangle* arrstart, float (*getattribute)(Triangle))
+void swap(Triangle &a,Triangle &b)
 {
-
+    Triangle tmp = a;
+    a = b;
+    b = tmp;
+}
+int Split(Triangle* arrstart,int a,int b,float p, float* (*getattribute)(Triangle&))
+{
+    int left = a;
+    int right = b;
+    while(left<right)
+    {
+        while(p<(*(getattribute(arrstart[right])))&&right>left)right--;
+        swap(arrstart[right],arrstart[left]);
+        while(p>=(*(getattribute(arrstart[left])))&&left<right)left++;
+        swap(arrstart[right],arrstart[left]);
+    }
+    return left;
+}
+void Sorttris(Triangle* arrstart,int a, int b, float* (*getattribute)(Triangle&))
+{
+    int random;
+    if(b-a>0)
+    {
+        random = a+(rand()%(b-a));
+    }else
+    {
+        return;
+    }
+    swap(arrstart[a],arrstart[random]);
+    float pivot = *getattribute(arrstart[a]);
+    Triangle piv = arrstart[a];
+    int splitpoint;
+    if(b>a)
+    {
+        splitpoint = Split(arrstart,a,b,pivot,getattribute);
+        arrstart[splitpoint]=piv;
+        Sorttris(arrstart,a,splitpoint-1,getattribute);
+        Sorttris(arrstart,splitpoint+1,b,getattribute);
+    }
+}
+void Sorttris(Triangle* arrstart, float* (*getattribute)(Triangle&))
+{
+    int count = 0;
+    while(arrstart[count++].notnullflag){};
+    count-=2;
+    Sorttris(arrstart,0,count,getattribute);
 }
