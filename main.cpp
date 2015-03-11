@@ -82,13 +82,13 @@ public:
         switch(a)
         {
         case 1:
-            return this->x;
+            return x;
             break;
         case 2:
-            return this->y;
+            return y;
             break;
         case 3:
-            return this->z;
+            return z;
             break;
         }
     }
@@ -189,7 +189,7 @@ class TriBVHData
 public:
     d3Vector ma,mi;
     d3Vector center;
-    TriBVHData(){};
+    TriBVHData() {};
 };
 class Triangle
 {
@@ -205,12 +205,10 @@ public:
     };
     Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_)
     {
-
         BVHdata = new TriBVHData;
         BVHdata->center = (a.add(b).add(c)).scalarmultiply(0.333333333333);
         BVHdata->ma = max(a,b,c);
         BVHdata->mi = min(a,b,c);
-
     };
     float surfaceArea()
     {
@@ -245,7 +243,7 @@ float* getz(Triangle &a)
 d3Vector maximum(Triangle* a,int length)
 {
     d3Vector out = a->BVHdata->ma;
-    for(int i=1;i<length;i++)
+    for(int i=0; i<length; i++)
     {
         out = max(out,a[i].BVHdata->ma);
     }
@@ -254,10 +252,22 @@ d3Vector maximum(Triangle* a,int length)
 d3Vector minimum(Triangle* a,int length)
 {
     d3Vector out = a->BVHdata->mi;
-    for(int i=1;i<length;i++)
+    for(int i=0; i<length; i++)
     {
         out = min(out,a[i].BVHdata->mi);
     }
+    return out;
+}
+d3Vector centroidAverage(Triangle* a,int length)
+{
+    d3Vector out(0,0,0);
+    d3Vector b(0,0,0);
+    for(int i =0; i<length; i++)
+    {
+        b = a[i].BVHdata->center;
+        out = out.add(a[i].BVHdata->center);
+    }
+    out = out.scalarmultiply(1.0/(float)length);
     return out;
 }
 #include "LinkedList.cpp"
@@ -270,31 +280,41 @@ public:
     d3Vector ma,mi;
     bool isleaf = false;
     Triangle* array = 0;
-    BVHNode(Triangle* in, int length)
+    BVHNode(Triangle* in,int a, int length)
     {
-        if(length<=5)
+        mi = minimum(&in[a],length);
+        ma = maximum(&in[a],length);
+        if(length<=6)
         {
             isleaf = true;
-            array = in;
+            array = &(in[a]);
             l = length;
             return;
         }
-        d3Vector mi = minimum(in,length);
-        d3Vector ma = maximum(in,length);
         d3Vector d = ma.subtract(mi);
-        d3Vector a(d);
-        if(a.x<0)a.x*=-1;
-        if(a.y<0)a.y*=-1;
-        if(a.z<0)a.z*=-1;
-        int axis = (a.x>a.y&&a.x>a.z)?(1):((a.y>a.x&&a.y>a.z)?(2):(3));
-        d = d.scalarmultiply(0.5);
-        d = d.add(mi);
-        float comparision = d.get(axis);
-        Sorttris(in,axis == 1?(getx):((axis == 2)?(gety):(getz)));
-        int i=0;
-        while(in[i].BVHdata->center.get(axis)<comparision)i++;
-        left = new BVHNode(in,i);
-        right = new BVHNode(in+i,length-i);
+        d3Vector b(d);
+        if(b.x<0)b.x*=-1;
+        if(b.y<0)b.y*=-1;
+        if(b.z<0)b.z*=-1;
+        d = (ma.add(mi)).scalarmultiply(0.5);
+        int axis = (b.x>b.y&&b.x>b.z)?(1):((b.y>b.x&&b.y>b.z)?(2):(3));
+        float comparision = axis == 1?(d.x):((axis == 2)?(d.y):(d.z));
+        int i=Split(in,a,a+length-1,comparision,axis == 1?(getx):((axis == 2)?(gety):(getz)));
+        if(i==a)
+        {
+            d = centroidAverage(in+a,length);
+            comparision = axis == 1?(d.x):((axis == 2)?(d.y):(d.z));
+            i=Split(in,a,a+length-1,comparision,axis == 1?(getx):((axis == 2)?(gety):(getz)));
+            axis = (axis==3?axis+2:axis+1)%4;
+        }
+        if(i==a)
+        {
+
+            i=a+(rand()%(length-2))+1;
+            //axis = (axis==3?axis+2:axis+1)%4;
+        }
+        left = new BVHNode(in,a,i-a);
+        right = new BVHNode(in,i,a+length-i);
     }
 };
 class BVH
@@ -307,14 +327,18 @@ public:
     d3Vector ambientcolor = d3Vector(0,0,0);
     BVH(Scene &in)
     {
+        cout<<"Constructing BVH"<<endl;
         spherepointer = in.spherepointer;
         int count = 0;
         Triangle* a = in.trianglepointer;
         while(a->notnullflag)
-        {count++;
-        a++;}
+        {
+            count++;
+            a++;
+        }
         //count--;
-        root = new BVHNode(in.trianglepointer,count);
+        root = new BVHNode(in.trianglepointer,0,count);
+        cout<<"Done"<<endl;
     }
 };
 struct hitdata
@@ -485,24 +509,26 @@ public:
         cache.hit = false;
         if(in.isleaf)
         {
-            hitdata lowesthit;
-            float lowestt = 1e10;
+            cache.hit = true;
+            return cache;
+            float lowestt = 1e3;
             float hitt;
             Triangle* hittriangle;
-            lowesthit.hit = false;
-
-            for(int i = 0;i<in.l;i++)
+            for(int i = 0; i<=in.l; i++)
             {
                 hitt = intersectwith(in.array[i]);
                 if(hitt)
-                    if(hitt<lowestt)
+                    if(hitt<lowestt&&hitt>0)
                     {
-                        hittriangle = in.array+i;
+                        hittriangle = &in.array[i];
                         lowestt = hitt;
+                        cache.hit = true;
                     }
             }
-            if(lowestt = 1e10)return cache;
-            cache.hit = true;
+            if(!cache.hit)
+            {
+                return cache;
+            };
             cache.coord = O.add(V.scalarmultiply(lowestt));
             cache.material = hittriangle->material;
             cache.normal = (hittriangle->b.subtract(hittriangle->a)).crossproduct(hittriangle->c.subtract(hittriangle->a)).normalize();
@@ -521,8 +547,14 @@ public:
             cache2 = intersectwith(*in.right);
             if(cache2.hit)
             {
-                if(cache2.t<cache.t)
+                if(cache.hit)
+                {
+                    if(cache2.t<cache.t)
+                        cache = cache2;
+                }else
+                {
                     cache = cache2;
+                }
             }
         }
         return cache;
@@ -544,26 +576,31 @@ public:
                 }
             sphereptr = sphereptr->nextsphere;
         }
-        hitdata BVHhit = intersectwith(*in.root);
+        hitdata BVHhit;
+        if(intersectwith(in.root->mi,in.root->ma))
+        {
+            BVHhit = intersectwith(*in.root);
+        }
+        else
+        {
+            BVHhit.hit = false;
+        }
+        //return BVHhit;
         if(hitsphere == 0&&!BVHhit.hit)
         {
-            hitdata f;
-            f.hit =false;
-            return f;
+            return BVHhit;
         }
-        if(lowestt<BVHhit.t&&hitsphere!=0)
+        if((BVHhit.hit?lowestt<BVHhit.t:true)&&hitsphere!=0)
         {
             hitdata spherehit;
+            spherehit.t = lowestt;
             spherehit.coord = O.add(V.scalarmultiply(lowestt));
             spherehit.hit = true;
             spherehit.normal = spherehit.coord.subtract(hitsphere->pos).normalize();
             spherehit.material = hitsphere->material;
             return spherehit;
         }
-        if(lowestt>BVHhit.t&&BVHhit.hit)
-        {
-            return BVHhit;
-        }
+        return BVHhit;
     }
 };
 #include "FileLoader.cpp"
@@ -594,7 +631,7 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     d3Vector cache = finaldirection.scalarmultiply(fdistance);
     d3Vector startdiff(getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter));
     //finaldirection = cache.subtract(startdiff);
-    //finaldirection = finaldirection.rotatearoundorgin(0,0);
+    //finaldirection = finaldirection.rotatearoundorgin(450,0);
     finaldirection = finaldirection.normalize();
     return ray(d3Vector(9,0,2)/*.add(startdiff)*/,finaldirection);
 
@@ -602,6 +639,10 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
 d3Vector getcolor(Material m)
 {
     return d3Vector(m.r,m.g,m.b);
+}
+inline float abs(float in)
+{
+    return in>0?in:-in;
 }
 d3Vector get_glossy_color(int depth,hitdata objecthit,ray cameraray,BVH &scen);
 d3Vector get_diffuse_color(int depth,hitdata objecthit,ray cameraray,BVH &scen);
@@ -612,16 +653,20 @@ d3Vector trace(ray inray,BVH &scene,int depth)
     //cout<<"k"<<endl;
     objecthit = inray.intersectwith(scene);
 
-    if((!objecthit.hit)||(depth==0))
+    if((!objecthit.hit||(depth==0)))
     {
         return scene.ambientcolor;
     }
+    return d3Vector(255,0,0);
+    //return (abs(objecthit.normal.x)>abs(objecthit.normal.y)&&abs(objecthit.normal.x)>abs(objecthit.normal.z))?(d3Vector(255,0,0)):((abs(objecthit.normal.y)>abs(objecthit.normal.z)&&abs(objecthit.normal.y)>abs(objecthit.normal.x))?(d3Vector(0,255,0)):(d3Vector(0,0,255)));
+    //return objecthit.normal.scalarmultiply(255);
+    //return d3Vector((objecthit.t-8)*(255.0/3.0),0,0);
     d3Vector outcolor;
+    if(inray.V.dot(objecthit.normal)>0)
+    {
+        objecthit.normal = objecthit.normal.scalarmultiply(-1.0);
+    }
     //return objecthit.material.diffuseglossy>0.5?d3Vector(0,0,255):d3Vector(255,0,0);
-    /* if(objecthit.material.r==84)
-     {
-         return get_transmit_color(depth,objecthit,inray,scene);
-     }*/
     if(false)//objecthit.material.alpha<0.1)
     {
         return get_transmit_color(depth,objecthit,inray,scene,1.1);
@@ -632,7 +677,6 @@ d3Vector trace(ray inray,BVH &scene,int depth)
         outcolor = outcolor.scalarmultiply((float)1 - objecthit.material.diffuseglossy);
         outcolor = (outcolor).add(get_glossy_color(depth,objecthit,inray,scene).scalarmultiply(objecthit.material.diffuseglossy));
     } //objecthit.normal = objecthit.normal.normalize();
-    //return objecthit.normal.scalarmultiply(255);
     return outcolor.add(getcolor(objecthit.material).scalarmultiply(objecthit.material.emission));
 }
 int nth = 2;
@@ -644,7 +688,7 @@ d3Vector cosweightedpointinhemisphere()
     discpoint.z = fastsqrt(1.0-((discpoint.x*discpoint.x)+(discpoint.y*discpoint.y)));
     return discpoint;
 }
-d3Vector diffusevec(d3Vector normal)
+d3Vector diffusevec(d3Vector &normal)
 {
     d3Vector hemispherepoint = cosweightedpointinhemisphere();
     d3Vector tangent(normal.y,-1.0*normal.x,0);
@@ -739,7 +783,7 @@ d3Vector computePixel (int x,int y,BVH seed,d3Vector old)
     //static int64_t passnumber = 0;
     int pass = seed.passnumber;
     d3Vector Pixel;
-    d3Vector Tracedcolor =trace(getCameraRay(x,y,1000,1000,3200,1,8),seed,3) ;
+    d3Vector Tracedcolor =trace(getCameraRay(x,y,1000,1000,3200,1,8),seed,4) ;
     Pixel = ((old.scalarmultiply(pass)).add(Tracedcolor)).scalarmultiply(1.0/(float)(1+pass));
     return Pixel;
 }//trace(getCameraRay(x,y,1000,1000,0,1,3),seed,5)
@@ -841,7 +885,9 @@ int main(int argv,char* argc[])
     }
     else
     {
-        sce = generateScene("tracercube.obj");
+        string str;
+        cin>>str;
+        sce = generateScene(&str[0]);
     }
     BVH renderBVH(sce);
     //Scene sce = generateScene("tracercube.obj");
@@ -865,11 +911,11 @@ int main(int argv,char* argc[])
 
     }
     srand(rand());
-    float t = 0;
+    float t = clock();
     while (sce.passnumber<samples)
     {
         cout<<"\r"<<clock()-t<<"  ";
-        t = clock();
+        //t = clock();
         p = sce.passnumber;
         thread section2(computeSection,501,1299,0,500,regimage,renderBVH);
         thread section3(computeSection,651,1299,501,999,regimage,sce2);

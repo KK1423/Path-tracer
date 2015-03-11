@@ -131,9 +131,9 @@ Scene readFile (string filename)
                 cout<<b.x<<" "<<b.y<<" "<<b.z<<" "<<endl;
                 cout<<c.x<<" "<<c.y<<" "<<c.z<<" "<<endl;*/
                 tricount++;
-                tris.addmember(Triangle(a.scalarmultiply(3.0),
-                                        b.scalarmultiply(3.0),
-                                        c.scalarmultiply(3.0),
+                tris.addmember(Triangle(a,
+                                        b,
+                                        c,
                                         Material(1,1,1,255,255,255)));
                 break;
             }
