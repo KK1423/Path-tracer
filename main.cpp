@@ -280,11 +280,11 @@ public:
     d3Vector ma,mi;
     bool isleaf = false;
     Triangle* array = 0;
-    BVHNode(Triangle* in,int a, int length)
+    BVHNode(Triangle* in,int a, int length,int de = 0)
     {
         mi = minimum(&in[a],length);
         ma = maximum(&in[a],length);
-        if(length<=6)
+        if(length<=5||de>15)
         {
             isleaf = true;
             array = &(in[a]);
@@ -305,16 +305,15 @@ public:
             d = centroidAverage(in+a,length);
             comparision = axis == 1?(d.x):((axis == 2)?(d.y):(d.z));
             i=Split(in,a,a+length-1,comparision,axis == 1?(getx):((axis == 2)?(gety):(getz)));
-            axis = (axis==3?axis+2:axis+1)%4;
         }
+        //Sorttris(in,a,a+length,axis == 1?(getx):((axis == 2)?(gety):(getz)));
         if(i==a)
         {
-
             i=a+(rand()%(length-2))+1;
-            //axis = (axis==3?axis+2:axis+1)%4;
+            axis = (axis==3?axis+2:axis+1)%4;
         }
-        left = new BVHNode(in,a,i-a);
-        right = new BVHNode(in,i,a+length-i);
+        left = new BVHNode(in,a,i-a,de+1);
+        right = new BVHNode(in,i,a+length-i,de+1);
     }
 };
 class BVH
@@ -503,15 +502,13 @@ public:
         if (tmax <= 0) return false;
         return true;
     }
-    hitdata intersectwith(BVHNode &in)
+    hitdata intersectwith(BVHNode &in,int d = 0)
     {
         hitdata cache;
         cache.hit = false;
         if(in.isleaf)
         {
-            cache.hit = true;
-            return cache;
-            float lowestt = 1e3;
+            float lowestt = 1e6;
             float hitt;
             Triangle* hittriangle;
             for(int i = 0; i<=in.l; i++)
@@ -540,11 +537,11 @@ public:
         cache2.hit = false;
         if(intersectwith(in.left->mi,in.left->ma))
         {
-            cache = intersectwith(*in.left);
+            cache = intersectwith(*in.left,d+1);
         }
         if(intersectwith(in.right->mi,in.right->ma))
         {
-            cache2 = intersectwith(*in.right);
+            cache2 = intersectwith(*in.right,d+1);
             if(cache2.hit)
             {
                 if(cache.hit)
@@ -626,14 +623,14 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     float yfraction = ((float)y)/((float)height);
     xfraction-=0.65;
     yfraction-=0.5;
-    d3Vector finaldirection(-flength,xfraction,-yfraction);
+    d3Vector finaldirection(xfraction,flength,-yfraction);
     finaldirection = finaldirection.normalize();
     d3Vector cache = finaldirection.scalarmultiply(fdistance);
     d3Vector startdiff(getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter));
     //finaldirection = cache.subtract(startdiff);
     //finaldirection = finaldirection.rotatearoundorgin(450,0);
     finaldirection = finaldirection.normalize();
-    return ray(d3Vector(9,0,2)/*.add(startdiff)*/,finaldirection);
+    return ray(d3Vector(0,-9,2)/*.add(startdiff)*/,finaldirection);
 
 }
 d3Vector getcolor(Material m)
@@ -657,7 +654,6 @@ d3Vector trace(ray inray,BVH &scene,int depth)
     {
         return scene.ambientcolor;
     }
-    return d3Vector(255,0,0);
     //return (abs(objecthit.normal.x)>abs(objecthit.normal.y)&&abs(objecthit.normal.x)>abs(objecthit.normal.z))?(d3Vector(255,0,0)):((abs(objecthit.normal.y)>abs(objecthit.normal.z)&&abs(objecthit.normal.y)>abs(objecthit.normal.x))?(d3Vector(0,255,0)):(d3Vector(0,0,255)));
     //return objecthit.normal.scalarmultiply(255);
     //return d3Vector((objecthit.t-8)*(255.0/3.0),0,0);
@@ -835,16 +831,16 @@ void dump(d3Vector **inImage,int width,int height)
     system(str2.c_str());
     cin>>str2;
 }
-void computeSection(int xstart,int xend, int ystart, int yend,d3Vector **opImage,BVH sce)
+void computeSection(int xstart,int xend, int ystart, int yend,d3Vector **opImage,BVH *sce)
 {
     int x = xstart;
     int y = ystart;
-    p = sce.passnumber;
+    p = sce->passnumber;
     while(y<=yend)
     {
         while(x<=xend)
         {
-            opImage[x][y]=computePixel(x,y,sce,opImage[x][y]);
+            opImage[x][y]=computePixel(x,y,*sce,opImage[x][y]);
             x++;
         }
         x = xstart;
@@ -894,9 +890,10 @@ int main(int argv,char* argc[])
     int samples;
     cin>>samples;
     sce.recipjitter = 40000000;
-    BVH sce2 = sce;
+    BVH sce2 = renderBVH;
     BVH sce3 = sce2;
     BVH sce4 = sce3;
+    BVH sce5 = sce4;
     sce.ambientcolor = d3Vector(0,0,0);
     srand(5);
     srand(rand());
@@ -912,23 +909,23 @@ int main(int argv,char* argc[])
     }
     srand(rand());
     float t = clock();
-    while (sce.passnumber<samples)
+    while (sce5.passnumber<samples)
     {
         cout<<"\r"<<clock()-t<<"  ";
-        //t = clock();
-        p = sce.passnumber;
-        thread section2(computeSection,501,1299,0,500,regimage,renderBVH);
-        thread section3(computeSection,651,1299,501,999,regimage,sce2);
-        thread section4(computeSection,0,650,501,999,regimage,sce3);
-        computeSection(0,650,0,500,regimage,sce4);
+        t = clock();
+        //p = sce.passnumber;
+        thread section2(computeSection,651,1299,501,999,regimage,&sce5);
+        thread section3(computeSection,651,1299,0,500,regimage,&sce2);
+        thread section4(computeSection,0,650,501,999,regimage,&sce3);
+        computeSection(0,650,0,500,regimage,&sce4);
         section2.join();
         section3.join();
         section4.join();
-        sce.passnumber++;
+        sce5.passnumber++;
         sce2.passnumber++;
         sce3.passnumber++;
         sce4.passnumber++;
-        cout<<sce.passnumber;
+        cout<<sce5.passnumber;
     }
     dump(regimage,1299,999);
     return 0;
