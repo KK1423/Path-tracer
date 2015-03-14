@@ -134,7 +134,7 @@ Scene readFile (string filename)
                 tris.addmember(Triangle(a,
                                         b,
                                         c,
-                                        Material(1,1,1,255,255,255)));
+                                        Material(1,1,1,200,200,200)));
                 break;
             }
         }

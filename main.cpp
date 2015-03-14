@@ -284,7 +284,7 @@ public:
     {
         mi = minimum(&in[a],length);
         ma = maximum(&in[a],length);
-        if(length<=5||de>15)
+        if(length<=4)//||de>15)
         {
             isleaf = true;
             array = &(in[a]);
@@ -396,7 +396,7 @@ public:
             return 0.0;
         }
     }
-    float intersectwith(Triangle triangle)
+    float intersectwith(Triangle &triangle)
     {
         // Algorithm credit to Tomas Moller and Ben Trumbore
         d3Vector edge1 = triangle.b.subtract(triangle.a);
@@ -466,7 +466,7 @@ public:
         //lowesthit.material.diffuseglossy = sphere?1:0;
         return lowesthit;
     }
-    bool intersectwith(d3Vector mi,d3Vector ma)
+    bool intersectwith(d3Vector &mi,d3Vector &ma)
     {
         float temp;
         float tmin = (mi.x-O.x)/V.x;
@@ -502,23 +502,22 @@ public:
         if (tmax <= 0) return false;
         return true;
     }
-    hitdata intersectwith(BVHNode &in,int d = 0)
+    inline hitdata intersectwith(BVHNode &in,int d = 0)
     {
         hitdata cache;
         cache.hit = false;
         if(in.isleaf)
         {
-            float lowestt = 1e6;
+            cache.t = 1e6;
             float hitt;
             Triangle* hittriangle;
             for(int i = 0; i<=in.l; i++)
             {
                 hitt = intersectwith(in.array[i]);
-                if(hitt)
-                    if(hitt<lowestt&&hitt>0)
+                    if(hitt<cache.t&&hitt>0.01)
                     {
                         hittriangle = &in.array[i];
-                        lowestt = hitt;
+                        cache.t = hitt;
                         cache.hit = true;
                     }
             }
@@ -526,10 +525,9 @@ public:
             {
                 return cache;
             };
-            cache.coord = O.add(V.scalarmultiply(lowestt));
+            cache.coord = O.add(V.scalarmultiply(cache.t));
             cache.material = hittriangle->material;
             cache.normal = (hittriangle->b.subtract(hittriangle->a)).crossproduct(hittriangle->c.subtract(hittriangle->a)).normalize();
-            cache.t = lowestt;
             return cache;
 
         }
@@ -547,16 +545,16 @@ public:
                 if(cache.hit)
                 {
                     if(cache2.t<cache.t)
-                        cache = cache2;
+                        return cache2;
                 }else
                 {
-                    cache = cache2;
+                    return cache2;
                 }
             }
         }
         return cache;
     }
-    hitdata intersectwith(BVH &in)
+    inline hitdata intersectwith(BVH &in)
     {
         Sphere* sphereptr = in.spherepointer;
         Sphere* hitsphere = 0;
@@ -633,7 +631,7 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     return ray(d3Vector(0,-9,2)/*.add(startdiff)*/,finaldirection);
 
 }
-d3Vector getcolor(Material m)
+d3Vector getcolor(Material &m)
 {
     return d3Vector(m.r,m.g,m.b);
 }
@@ -641,9 +639,9 @@ inline float abs(float in)
 {
     return in>0?in:-in;
 }
-d3Vector get_glossy_color(int depth,hitdata objecthit,ray cameraray,BVH &scen);
-d3Vector get_diffuse_color(int depth,hitdata objecthit,ray cameraray,BVH &scen);
-d3Vector get_transmit_color(int depth,hitdata objecthit,ray cameraray,BVH &scen, float ior);
+d3Vector get_glossy_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen);
+d3Vector get_diffuse_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen);
+d3Vector get_transmit_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen, float ior);
 d3Vector trace(ray inray,BVH &scene,int depth)
 {
     hitdata objecthit;
@@ -656,7 +654,7 @@ d3Vector trace(ray inray,BVH &scene,int depth)
     }
     //return (abs(objecthit.normal.x)>abs(objecthit.normal.y)&&abs(objecthit.normal.x)>abs(objecthit.normal.z))?(d3Vector(255,0,0)):((abs(objecthit.normal.y)>abs(objecthit.normal.z)&&abs(objecthit.normal.y)>abs(objecthit.normal.x))?(d3Vector(0,255,0)):(d3Vector(0,0,255)));
     //return objecthit.normal.scalarmultiply(255);
-    //return d3Vector((objecthit.t-8)*(255.0/3.0),0,0);
+    //return d3Vector(0,0,0);
     d3Vector outcolor;
     if(inray.V.dot(objecthit.normal)>0)
     {
@@ -694,11 +692,11 @@ d3Vector diffusevec(d3Vector &normal)
     //matrix multiplication
     return (bitangent.scalarmultiply(hemispherepoint.x)).add((tangent.scalarmultiply(hemispherepoint.y)).add(normal.scalarmultiply(hemispherepoint.z)));
 }
-d3Vector get_diffuse_color(int depth,hitdata objecthit,ray cameraray,BVH &scen)
+d3Vector get_diffuse_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen)
 {
     return trace(ray(objecthit.coord,diffusevec(objecthit.normal)),scen,depth-1).individualmultiply((getcolor(objecthit.material)).scalarmultiply(1/255.0));
 }
-d3Vector get_glossy_color(int depth,hitdata objecthit,ray cameraray,BVH &scen)
+d3Vector get_glossy_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen)
 {
     cameraray.V = cameraray.V.normalize();
     ray nextray(d3Vector(0,0,0),d3Vector(0,0,0));
@@ -710,7 +708,7 @@ d3Vector get_glossy_color(int depth,hitdata objecthit,ray cameraray,BVH &scen)
     return objectcolor.individualmultiply(trace(nextray,scen,depth - 1).scalarmultiply(0.003921568627));
 }
 bool insideflag = false;
-d3Vector get_transmit_color(int depth,hitdata objecthit,ray cameraray,BVH &scen,float ior = 1.3)
+d3Vector get_transmit_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen,float ior = 1.3)
 {
     cameraray.V = cameraray.V.normalize();
     d3Vector normal = objecthit.normal;
@@ -769,11 +767,11 @@ Scene generateScene (char* str)
 
 }
 Scene sce(0,0,0,0);
-d3Vector normalizeColor(d3Vector in)
+d3Vector normalizeColor(d3Vector &in)
 {
     return d3Vector(in.x>255?255:in.x,in.y>255?255:in.y,in.z>255?255:in.z);
 }
-d3Vector computePixel (int x,int y,BVH seed,d3Vector old)
+d3Vector computePixel (int x,int y,BVH &seed,d3Vector old)
 {
     //cout<<"k"<<endl;
     //static int64_t passnumber = 0;
@@ -890,11 +888,11 @@ int main(int argv,char* argc[])
     int samples;
     cin>>samples;
     sce.recipjitter = 40000000;
+    renderBVH.ambientcolor = d3Vector(55,25,15);
     BVH sce2 = renderBVH;
     BVH sce3 = sce2;
     BVH sce4 = sce3;
     BVH sce5 = sce4;
-    sce.ambientcolor = d3Vector(0,0,0);
     srand(5);
     srand(rand());
     d3Vector **regimage = new d3Vector*[1300];
