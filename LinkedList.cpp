@@ -33,6 +33,15 @@ public:
         }
         delete this;
     }
+    void deleteall()
+    {
+        if(nextnode!=0)
+        {
+            nextnode->deleteall();
+            nextnode = 0;
+        }
+        delete this;
+    }
 };
 template<class TYPE> class LinkedList
 {
@@ -109,6 +118,10 @@ public:
             memberCount++;
         }
         return outArray;
+    }
+    ~LinkedList()
+    {
+        startptr->deleteall();
     }
 };
 inline void swap(Triangle &a,Triangle &b)
