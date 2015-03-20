@@ -5,8 +5,6 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
-#include <mutex>
-#include <atomic>
 //#include <x86intrin.h>
 #define pi = 3.14159;
 using namespace std;
@@ -508,7 +506,7 @@ public:
         cache.hit = false;
         if(in.isleaf)
         {
-            cache.t = 1e6;
+            cache.t = 1e6; // far clipping plane
             float hitt;
             Triangle* hittriangle;
             for(int i = 0; i<=in.l; i++)
