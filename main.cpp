@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
+#include <windows.h>
 //#include <x86intrin.h>
 #define pi = 3.14159;
 using namespace std;
@@ -195,6 +196,7 @@ public:
     TriBVHData* BVHdata;
     d3Vector a,b,c;
     Material material;
+    d3Vector normal;
     bool notnullflag = true;
     Triangle() {};
     Triangle(int a)
@@ -207,6 +209,7 @@ public:
         BVHdata->center = (a.add(b).add(c)).scalarmultiply(0.333333333333);
         BVHdata->ma = max(a,b,c);
         BVHdata->mi = min(a,b,c);
+        normal = (b.subtract(a)).crossproduct(c.subtract(a)).normalize();
     };
     float surfaceArea()
     {
@@ -397,6 +400,7 @@ public:
     float intersectwith(Triangle &triangle)
     {
         // Algorithm credit to Tomas Moller and Ben Trumbore
+        if(V.dot(triangle.normal)>0.0)return 0;
         d3Vector edge1 = triangle.b.subtract(triangle.a);
         d3Vector edge2 = triangle.c.subtract(triangle.a);
         d3Vector pvec = V.crossproduct(edge2);
@@ -459,7 +463,7 @@ public:
         else
         {
             lowesthit.material = hittriangle->material;
-            lowesthit.normal = (hittriangle->b.subtract(hittriangle->a)).crossproduct(hittriangle->c.subtract(hittriangle->a)).normalize();
+            lowesthit.normal = hittriangle->normal;
         }
         //lowesthit.material.diffuseglossy = sphere?1:0;
         return lowesthit;
@@ -525,7 +529,7 @@ public:
             };
             cache.coord = O.add(V.scalarmultiply(cache.t));
             cache.material = hittriangle->material;
-            cache.normal = (hittriangle->b.subtract(hittriangle->a)).crossproduct(hittriangle->c.subtract(hittriangle->a)).normalize();
+            cache.normal = hittriangle->normal;
             return cache;
 
         }
@@ -623,10 +627,10 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     finaldirection = finaldirection.normalize();
     d3Vector cache = finaldirection.scalarmultiply(fdistance);
     d3Vector startdiff(getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter));
-    //finaldirection = cache.subtract(startdiff);
+    finaldirection = cache.subtract(startdiff);
     //finaldirection = finaldirection.rotatearoundorgin(450,0);
     finaldirection = finaldirection.normalize();
-    return ray(d3Vector(0,-9,2)/*.add(startdiff)*/,finaldirection);
+    return ray(d3Vector(0,-9,2).add(startdiff),finaldirection);
 
 }
 d3Vector getcolor(Material &m)
@@ -775,13 +779,40 @@ d3Vector computePixel (int x,int y,BVH &seed,d3Vector old)
     //static int64_t passnumber = 0;
     int pass = seed.passnumber;
     d3Vector Pixel;
-    d3Vector Tracedcolor =trace(getCameraRay(x,y,1000,1000,3200,1,8),seed,4) ;
+    d3Vector Tracedcolor =trace(getCameraRay(x,y,1000,1000,1280,1,8.6),seed,4) ;
     Pixel = ((old.scalarmultiply(pass)).add(Tracedcolor)).scalarmultiply(1.0/(float)(1+pass));
     return Pixel;
 }//trace(getCameraRay(x,y,1000,1000,0,1,3),seed,5)
+
+string intToString(int n)
+{
+    if(n==0)
+        return string("0");
+    n = abs(n);
+    int a =1;
+    int e =0;
+    while(n>a)
+    {
+        a*=10;
+        e++;
+    }
+    if(n==a)e++;
+    char *out = new char[e+1];
+    out[e]=(char)0;
+    int i = e-1;
+    while(i>=0)
+    {
+        int j = n%10;
+        n=n/10;
+        out[i]=(char) (j+48);
+        i--;
+    }
+    string finalstring(out);
+    return finalstring;
+}
 void dump(d3Vector **inImage,int width,int height)
 {
-    ifstream cachefile("cache");
+    /*ifstream cachefile("cache");
     if(!cachefile.is_open())
     {
         cachefile.close();
@@ -794,9 +825,21 @@ void dump(d3Vector **inImage,int width,int height)
     }
     char str;
     cachefile.read(&str,1);
-    cachefile.close();
-    string str2 = "Raytraceimage1.ppm";
-    str2[13]=(int)str+48;
+    cachefile.close();*/
+    string str2 = "Raytraceimage.ppm";
+    ifstream tester(str2);
+    int filenum = 0;
+    while(tester.good())
+    {
+        tester.close();
+        filenum++;
+        str2 = "Raytraceimage.ppm";
+        str2.insert(13,intToString(filenum));
+        cout<<endl<<str2<<endl;
+        tester.open(str2);
+        cout<<(tester.good()?"true":"false");
+    }
+    tester.close();
     ofstream outputFile(str2,std::ios_base::openmode::_S_bin);
     outputFile<<"P6 "<<endl
               <<width<<" "<<height<<" 255"<<endl;
@@ -820,9 +863,9 @@ void dump(d3Vector **inImage,int width,int height)
     }
     outputFile<<endl;
     outputFile.close();
-    outputFile.open("cache");
+    /*outputFile.open("cache");
     str = (char)((int)str+1);
-    outputFile.write(&str,1);
+    outputFile.write(&str,1);*/
     str2 = "start \"\"\"%programfiles(x86)%\\GimpShop\\bin\\gimp-2.8.exe\" "+str2;
     system(str2.c_str());
     cin>>str2;
@@ -869,7 +912,7 @@ int main(int argv,char* argc[])
 {
     //if(samples == 1){
     //  system("start Raytracer2.exe");return 0;}
-
+    SetConsoleTitle(string("PathTracer").c_str());
     Scene sce(0,0,0,0);
     if(argv>=2)
     {

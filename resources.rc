@@ -1,6 +1,6 @@
 #include <windows.h>
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-
+id ICON "icon.ico"
 VS_VERSION_INFO    VERSIONINFO
   FILEVERSION      3,3,0,1
   PRODUCTVERSION   3,0,0,1
@@ -23,10 +23,10 @@ VS_VERSION_INFO    VERSIONINFO
       VALUE "FileVersion",      "R3\0"
       VALUE "InternalName",     "Raytracer2\0"
       VALUE "LegalCopyright",   "Use freely.\0"
-      VALUE "LegalTrademarks",  "Source: http://goo.gl/qECLYI\0"
+      VALUE "LegalTrademarks",  "Source: http://goo.gl/DpdsJy\0"
       VALUE "OriginalFilename", "Raytracer2.exe\0"
       VALUE "PrivateBuild",     "\0"
-      VALUE "ProductName",      "MINITRACER\0"
+      VALUE "ProductName",      "PathTracer\0"
       VALUE "ProductVersion",   "R3\0"
       VALUE "SpecialBuild",     "\0"
     } // BLOCK "040904E4"

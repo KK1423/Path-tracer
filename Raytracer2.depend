@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1426857565 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
+1426977699 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -7,6 +7,7 @@
 	<iostream>
 	<fstream>
 	<thread>
+	<windows.h>
 	"LinkedList.cpp"
 	"FileLoader.cpp"
 
@@ -23,4 +24,7 @@
 	<mutex>
 	<atomic>
 	<exception>
+
+1426912830 source:c:\users\karth_000\documents\github\path-tracer\resources.rc
+	<windows.h>
 
