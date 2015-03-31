@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1426977699 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
+1427328698 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -13,7 +13,7 @@
 
 1426450127 c:\users\karth_000\documents\github\path-tracer\linkedlist.cpp
 
-1426600959 c:\users\karth_000\documents\github\path-tracer\fileloader.cpp
+1427328595 c:\users\karth_000\documents\github\path-tracer\fileloader.cpp
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -25,6 +25,23 @@
 	<atomic>
 	<exception>
 
-1426912830 source:c:\users\karth_000\documents\github\path-tracer\resources.rc
+1427339905 source:c:\users\karth_000\documents\github\path-tracer\resources.rc
 	<windows.h>
+
+1427647834 source:c:\users\karth_000\documents\github\path-tracer\gux.cpp
+	<windows.h>
+	<iostream>
+	"main.h"
+	"ColorPicker.h"
+
+1427329059 c:\users\karth_000\documents\github\path-tracer\main.h
+	<string>
+
+1427644170 c:\users\karth_000\documents\github\path-tracer\colorpicker.h
+
+1427754807 source:c:\users\karth_000\documents\github\path-tracer\colorpicker.cpp
+	<windows.h>
+	"ColorPicker.h"
+	<math.h>
+	"main.h"
 

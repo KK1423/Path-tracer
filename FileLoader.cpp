@@ -97,7 +97,7 @@ d3Vector get_vec(string line)
     out.z = parseforfloat(words[2]);
     return out;
 }
-Scene readFile (string filename)
+Scene readFile (string filename,Material m)
 {
     LinkedList<d3Vector> vecs;
     LinkedList<Triangle> tris;
@@ -134,7 +134,7 @@ Scene readFile (string filename)
                 tris.addmember(Triangle(a,
                                         b,
                                         c,
-                                        Material(1,1,1,200,200,200)));
+                                        m));
                 break;
             }
         }

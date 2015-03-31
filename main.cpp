@@ -633,6 +633,27 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     return ray(d3Vector(0,-9,2).add(startdiff),finaldirection);
 
 }
+class Camera
+{
+    d3Vector mx,my,mz,start;
+    float recipjitter;
+    float fdistance;
+    Camera(){};
+};
+ray MatrixRay(int x,int y,int height,int width, Camera &cam)
+{
+    float xfraction = ((float)x)/((float)width)-((width/height)/2);
+    float yfraction = ((float)y)/((float)height)-(height/2);
+    d3Vector direction((cam.mx.scalarmultiply(xfraction)).add(cam.my.scalarmultiply(yfraction)).add(cam.mz.scalarmultiply(zfraction)));
+    direction = direction.normalize();
+    d3Vector cache = direction.scalarmultiply(cam.fdistance);
+    d3Vector startdiff(getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter),getsignedrand()/float(recipjitter));
+    direction = cache.subtract(startdiff);
+    direction = direction.normalize();
+    return ray(cam.start.add(startdiff),direction);
+
+
+}g
 d3Vector getcolor(Material &m)
 {
     return d3Vector(m.r,m.g,m.b);
@@ -744,9 +765,9 @@ d3Vector get_transmit_color(int depth,hitdata &objecthit,ray &cameraray,BVH &sce
     }
     return get_glossy_color(depth,objecthit,cameraray,scen);
 }
-Scene generateScene (char* str)
+Scene generateScene (char* str, Material m)
 {
-    Scene proto(readFile(str));
+    Scene proto(readFile(str,m));
     cout<<(proto.trianglepointer[0].notnullflag?"true":"false")<<endl;
     cout<<proto.trianglepointer<<endl;
     Sphere *spheres[] =
@@ -907,8 +928,8 @@ int main(int argv,char* argc[])
     cin>>a;
     return 0;
 }*/
-
-int main(int argv,char* argc[])
+/*
+int main(int argv = 0,char* argc[] =0)
 {
     //if(samples == 1){
     //  system("start Raytracer2.exe");return 0;}
@@ -968,4 +989,4 @@ int main(int argv,char* argc[])
     }
     dump(regimage,1299,999);
     return 0;
-}
+}*/

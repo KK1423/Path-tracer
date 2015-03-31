@@ -1,6 +1,6 @@
 #include <windows.h>
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-id ICON "icon.ico"
+1 ICON "icon.ico"
 VS_VERSION_INFO    VERSIONINFO
   FILEVERSION      3,3,0,1
   PRODUCTVERSION   3,0,0,1
@@ -19,7 +19,7 @@ VS_VERSION_INFO    VERSIONINFO
     BLOCK "040904E4" // Lang=US English, CharSet=Windows Multilingual
     {
       VALUE "CompanyName",      "Karthik Karyamapudi\0"
-      VALUE "FileDescription",  "Path Tracer implementing Global Illumination. \n Run and type in number of samples. \n Outputs a .ppm file.\0"
+      VALUE "FileDescription",  "Path Tracer\0"
       VALUE "FileVersion",      "R3\0"
       VALUE "InternalName",     "Raytracer2\0"
       VALUE "LegalCopyright",   "Use freely.\0"

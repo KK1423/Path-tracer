@@ -37,15 +37,26 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Linker>
+			<Add option="-mwindows" />
+			<Add library="gdi32" />
+			<Add library="user32" />
+			<Add library="kernel32" />
+			<Add library="comctl32" />
+		</Linker>
+		<Unit filename="ColorPicker.cpp" />
+		<Unit filename="ColorPicker.h" />
 		<Unit filename="FileLoader.cpp">
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
+		<Unit filename="GUX.cpp" />
 		<Unit filename="LinkedList.cpp">
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
 		<Unit filename="main.cpp" />
+		<Unit filename="main.h" />
 		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
