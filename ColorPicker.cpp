@@ -25,13 +25,6 @@ void DisplayDIB(HWND hwnd, HDC hdc, COLORREF current)
         bi.bmiHeader.biBitCount          = 24;
         bi.bmiHeader.biCompression = BI_RGB;
         bi.bmiHeader.biClrUsed                = 256;
-        for(int i=0 ; i< 256; i++)
-        {
-          bi.bmiColors[i].rgbRed      = i;
-          bi.bmiColors[i].rgbGreen    = i;
-          bi.bmiColors[i].rgbBlue    = i;
-          bi.bmiColors[i].rgbReserved = 0;
-        }
 
             BYTE* pBits;
         hBM = (HBITMAP)CreateDIBSection( hdc, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (VOID**)&pBits, 0, 0 );
@@ -114,6 +107,11 @@ void DisplayDIB(HWND hwnd, HDC hdc, COLORREF current)
 
 int max(int a , int b)
 {
+    return a>b?a:b;
+}
+
+int min(int a , int b)
+{
     return a<b?a:b;
 }
 
@@ -131,7 +129,7 @@ void SetBlockColor(HWND parent,HMENU objindex,COLORREF c)
 {
     SetBlockColor(GetDlgItem(parent,(int) objindex),c);
 }
-#define Cpicker 24
+#define Cpicker 27
 #include "main.h"
 LRESULT CALLBACK ColorBlockProc(HWND WinHandle,UINT message, WPARAM wparam,LPARAM lparam)
 {
@@ -144,6 +142,22 @@ LRESULT CALLBACK ColorBlockProc(HWND WinHandle,UINT message, WPARAM wparam,LPARA
         }
     case WM_CREATE:
         {
+
+        WNDCLASSEX CPickerclass = {0};
+        CPickerclass.cbClsExtra = NULL;
+        CPickerclass.cbSize = sizeof(WNDCLASSEX);
+        CPickerclass.cbWndExtra = sizeof(COLORREF*);
+        CPickerclass.hbrBackground = (HBRUSH)(COLOR_3DSHADOW);
+        CPickerclass.hCursor = LoadCursor(GetModuleHandle(NULL),"IDC_ARROW");
+        CPickerclass.hIcon = LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(1));
+        CPickerclass.hIconSm = CPickerclass.hIcon;
+        CPickerclass.hInstance = GetModuleHandle(NULL);
+        CPickerclass.lpfnWndProc = (WNDPROC)ColorPickerProc;
+        CPickerclass.lpszClassName = "CPicker";
+        CPickerclass.lpszMenuName = NULL;
+        CPickerclass.style = NULL;
+        RegisterClassEx(&CPickerclass);
+
             CREATESTRUCT* in = (CREATESTRUCT*)lparam;
             SetWindowLong(WinHandle,0,(LONG) new ColorBlockData);
             ((ColorBlockData *)GetWindowLong(WinHandle,0))->handlevar = (HWND*)(in->lpCreateParams);
@@ -166,11 +180,9 @@ LRESULT CALLBACK ColorBlockProc(HWND WinHandle,UINT message, WPARAM wparam,LPARA
         }
     case WM_LBUTTONUP:
         {
-            if(CreateWindowEx(WS_EX_CLIENTEDGE|WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW,"CPicker","Pick A Color",WS_VISIBLE|WS_DLGFRAME|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,276,365,WinHandle,NULL,GetModuleHandle(NULL),0)==0)
+
+            if(CreateWindowEx(WS_EX_CLIENTEDGE|WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW,"CPicker","Pick A Color",WS_VISIBLE|WS_DLGFRAME|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,276,365,WinHandle,NULL,GetModuleHandle(NULL),(LPVOID)GetDlgCtrlID(WinHandle))==0)
             MessageBox(WinHandle,"safd",intToString(GetLastError()).c_str(),MB_ICONERROR);
-            CHOOSECOLORA a = {0};
-            a.hwndOwner = WinHandle;
-            ChooseColor(&a);
             break;
         }
     }
@@ -180,13 +192,15 @@ LRESULT CALLBACK ColorBlockProc(HWND WinHandle,UINT message, WPARAM wparam,LPARA
 
 LRESULT CALLBACK ColorPickerProc(HWND WinHandlel, UINT message, WPARAM wparam, LPARAM lparam)
 {
+    ColorPickerData* data;
+    if(message == WM_LBUTTONDOWN||message==WM_LBUTTONUP||message==WM_MOUSELEAVE||message==WM_MOUSEMOVE||message==WM_PAINT||message==WM_DESTROY)
+        data = (ColorPickerData*)GetWindowLong(WinHandlel,0);
 
     switch(message)
     {
     case WM_CREATE:
         {
-            SetWindowLong(WinHandlel,0,(LONG)new COLORREF);
-            *((COLORREF *)GetWindowLong(WinHandlel,0)) = RGB(127,127,127);
+            SetWindowLong(WinHandlel,0,(LONG)new ColorPickerData({RGB(127,127,127),(int)((CREATESTRUCT*)lparam)->lpCreateParams,false}));
             return 0;
         }
     case WM_PAINT:
@@ -196,16 +210,24 @@ LRESULT CALLBACK ColorPickerProc(HWND WinHandlel, UINT message, WPARAM wparam, L
             HDC hdc;
             GetClientRect(WinHandlel,&rc);
             hdc = BeginPaint(WinHandlel,&ps);
-            DisplayDIB(WinHandlel,hdc,*((COLORREF*)GetWindowLong(WinHandlel,0)));
+            DisplayDIB(WinHandlel,hdc,data->currentcolor);
             EndPaint(WinHandlel,&ps);
             break;
         }
+    case WM_LBUTTONDOWN:
+        if(!data->hidden)
+           {
+            ShowCursor(false);
+            data->hidden =true;
+           }
     case WM_MOUSEMOVE:
+        {
+            if(data->hidden){
+            TRACKMOUSEEVENT tme = {sizeof(TRACKMOUSEEVENT),2,WinHandlel,HOVER_DEFAULT};
+            TrackMouseEvent(&tme);}
         if((!(wparam&1) ))//|| HIWORD(lparam)<60)
             break;
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-        {
+
             RECT fd;
             GetClientRect(WinHandlel,&fd);
             COLORREF* ptr = (COLORREF *)GetWindowLong(WinHandlel,0);
@@ -221,14 +243,26 @@ LRESULT CALLBACK ColorPickerProc(HWND WinHandlel, UINT message, WPARAM wparam, L
                            min((int)((float)GetBValue(*ptr)*factor) ,255)
                            );
             }
-            SetBlockColor(GetWindow(WinHandlel,GW_OWNER),(HMENU)23,*((COLORREF *)GetWindowLong(WinHandlel,0)));
+            SetBlockColor(GetWindow(WinHandlel,GW_OWNER),(HMENU)((ColorPickerData*)GetWindowLong(WinHandlel,0))->ownerblockid,((ColorPickerData*)GetWindowLong(WinHandlel,0))->currentcolor);
             InvalidateRect(WinHandlel,&fd,false);
             break;
 
         }
+
+    case WM_MOUSELEAVE:
+        MessageBeep(MB_ICONERROR);
+    case WM_LBUTTONUP:
+        if(data->hidden)
+           {
+            ShowCursor(true);
+            data->hidden =false;
+           }
+        if(message == WM_MOUSELEAVE)
+            return 0;
+        break;
     case WM_DESTROY:
         {
-            delete  (COLORREF *)GetWindowLong(WinHandlel,0);
+            delete  data;
         }
     }
     return DefWindowProc(WinHandlel,message,wparam,lparam);

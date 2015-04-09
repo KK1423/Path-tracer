@@ -55,7 +55,12 @@
 			<Option compile="0" />
 			<Option link="0" />
 		</Unit>
-		<Unit filename="main.cpp" />
+		<Unit filename="LivePreview.cpp" />
+		<Unit filename="LivePreview.h" />
+		<Unit filename="icon.ico" />
+		<Unit filename="main.cpp">
+			<Option weight="24" />
+		</Unit>
 		<Unit filename="main.h" />
 		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />

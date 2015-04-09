@@ -12,4 +12,12 @@ typedef struct
     HWND* handlevar = NULL;
 } ColorBlockData;
 
+
+typedef struct
+{
+    COLORREF currentcolor;
+    int ownerblockid;
+    bool hidden;
+} ColorPickerData;
+
 #endif // COLORPICKER_H_INCLUDED

@@ -8,9 +8,12 @@
 #include <windows.h>
 //#include <x86intrin.h>
 #define pi = 3.14159;
-#include "main.h"
-    Material::Material() {}
-    Material::Material(float a, float d,float iOr, int re,int gr, int bl)
+class Material
+{
+public:
+    float alpha,diffuseglossy,ior,r,g,b,emission;
+    Material() {}
+    Material(float a, float d,float iOr, int re,int gr, int bl)
     {
         alpha = a;
         diffuseglossy = d;
@@ -20,7 +23,7 @@
         ior = iOr;
         emission = 0;
     }
-    Material::Material(float a, float d,float iOr, int re,int gr, int bl,float em)
+    Material(float a, float d,float iOr, int re,int gr, int bl,float em)
     {
         alpha = a;
         diffuseglossy = d;
@@ -30,6 +33,7 @@
         ior = iOr;
         emission = em;
     }
+};
 inline float rad(float degr)
 {
     degr = (degr*0.017453);
@@ -55,18 +59,23 @@ inline float fastsqrt(float n)
 {
     return sqrt(n);
 }
-    d3Vector::d3Vector(float X,float Y,float Z):x(X), y(Y), z(Z) {}
-    d3Vector d3Vector::scalarmultiply (float b)
+class d3Vector
+{
+
+public:
+    float x,y,z;
+    d3Vector(float X = 0,float Y = 0,float Z = 0):x(X), y(Y), z(Z) {}
+    d3Vector scalarmultiply (float b)
     {
         return d3Vector((x*b),(y*b),(z*b));
     }
-    d3Vector d3Vector::individualmultiply (d3Vector coefficients)
+    d3Vector individualmultiply (d3Vector coefficients)
     {
         d3Vector result;
         result = d3Vector((x)*coefficients.x,(y)*coefficients.y,(z)*coefficients.z);
         return result;
     }
-    float d3Vector::get(int a)
+    float get(int a)
     {
         switch(a)
         {
@@ -81,38 +90,38 @@ inline float fastsqrt(float n)
             break;
         }
     }
-    float d3Vector::dot(d3Vector b)
+    float dot(d3Vector b)
     {
         return ((x*b.x)+(y*b.y)+(z*b.z));
     }
-    float d3Vector::magnitude()
+    float magnitude()
     {
         return fastsqrt(x*x+y*y+z*z);
     }
-    float d3Vector::magnitudesq()
+    float magnitudesq()
     {
         return (x*x+y*y+z*z);
     }
-    d3Vector d3Vector::normalize()
+    d3Vector normalize()
     {
         float d = invsqrt(x*x+y*y+z*z);
         return d3Vector(x*d,y*d,z*d);
     };
-    float d3Vector::project(d3Vector aO,d3Vector aV)
+    float project(d3Vector aO,d3Vector aV)
     {
         d3Vector b=subtract(aO);
         aV=aV.normalize();
         return (b.dot(aV));
     }
-    d3Vector d3Vector::add(d3Vector a)
+    d3Vector add(d3Vector a)
     {
         return d3Vector((x)+a.x,(y)+a.y,(z)+a.z);
     }
-    d3Vector d3Vector::subtract(d3Vector a)
+    d3Vector subtract(d3Vector a)
     {
         return d3Vector((x)-a.x,(y)-a.y,(z)-a.z);
     }
-    d3Vector d3Vector::rotatearoundorgin(float zenith,float attitude)
+    d3Vector rotatearoundorgin(float zenith,float attitude)
     {
         d3Vector out(0,0,0);
         d3Vector in = *this;
@@ -123,25 +132,32 @@ inline float fastsqrt(float n)
         out = d3Vector((cosy*cosz)*in.x-(sinz)*in.y-(siny*cosz)*in.z,(cosy*sinz)*in.x+(cosz)*in.y-(siny*cosz)*in.z,(siny)*in.x+(cosy)*in.z);
         return out;
     }
-    d3Vector d3Vector::crossproduct(d3Vector a)
+    d3Vector crossproduct(d3Vector a)
     {
         return d3Vector(y*a.z-z*a.y,z*a.x-x*a.z,x*a.y-y*a.x);
     }
-    Sphere::Sphere() {};
-    Sphere::Sphere(float R,float X,float Y,float Z,Material m): r(R)
+};
+class Sphere
+{
+public:
+    float r,rsqr;
+    d3Vector pos;
+    Material material;
+    Sphere * nextsphere;
+    Sphere() {};
+    Sphere(float R,float X,float Y,float Z,Material m): r(R)
     {
         material = m;
         pos.x = X;
         pos.y = Y;
         pos.z = Z;
         rsqr = r*r;
-        nextsphere = 0;
     };
-    Sphere::~Sphere()
+    ~Sphere()
     {
-        if(nextsphere!=0)
         delete nextsphere;
     }
+};
 d3Vector max(d3Vector a, d3Vector b)
 {
     if(a.x<b.x)
@@ -170,13 +186,27 @@ d3Vector min(d3Vector a, d3Vector b,d3Vector c)
 {
     return min(a,min(b,c));
 }
-    TriBVHData::TriBVHData() {};
-    Triangle::Triangle() {};
-    Triangle::Triangle(int a)
+class TriBVHData
+{
+public:
+    d3Vector ma,mi;
+    d3Vector center;
+    TriBVHData() {};
+};
+class Triangle
+{
+public:
+    TriBVHData* BVHdata;
+    d3Vector a,b,c;
+    Material material;
+    d3Vector normal;
+    bool notnullflag = true;
+    Triangle() {};
+    Triangle(int a)
     {
         notnullflag = false;
     };
-    Triangle::Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_)
+    Triangle(d3Vector a_, d3Vector b_, d3Vector c_, Material m_): a(a_), b(b_),c(c_),material(m_)
     {
         BVHdata = new TriBVHData;
         BVHdata->center = (a.add(b).add(c)).scalarmultiply(0.333333333333);
@@ -184,11 +214,23 @@ d3Vector min(d3Vector a, d3Vector b,d3Vector c)
         BVHdata->mi = min(a,b,c);
         normal = (b.subtract(a)).crossproduct(c.subtract(a)).normalize();
     };
-    float Triangle::surfaceArea()
+    float surfaceArea()
     {
         return 0.5*(((b.subtract(a)).crossproduct(c.subtract(a))).magnitude());
     }
-    Scene::Scene(int sphereQuantity,Sphere* spheres, int trianglenum_, Triangle* triangles):spherenum(sphereQuantity),spherepointer(spheres),trianglepointer(triangles),trianglenum(trianglenum_) {}
+};
+class Scene
+{
+public:
+    int passnumber = 0;
+    int recipjitter = 3200;
+    Sphere* spherepointer = 0;
+    int spherenum;
+    Triangle* trianglepointer;
+    int trianglenum;
+    d3Vector ambientcolor;
+    Scene(int sphereQuantity,Sphere* spheres, int trianglenum_, Triangle* triangles):spherenum(sphereQuantity),spherepointer(spheres),trianglepointer(triangles),trianglenum(trianglenum_) {}
+};
 
 float* getx(Triangle &a)
 {
@@ -233,7 +275,16 @@ d3Vector centroidAverage(Triangle* a,int length)
     return out;
 }
 #include "LinkedList.cpp"
-    BVHNode::BVHNode(Triangle* in,int a, int length,int de)
+class BVHNode
+{
+public:
+    BVHNode* left = 0;
+    BVHNode* right = 0;
+    int l;
+    d3Vector ma,mi;
+    bool isleaf = false;
+    Triangle* array = 0;
+    BVHNode(Triangle* in,int a, int length,int de = 0)
     {
         mi = minimum(&in[a],length);
         ma = maximum(&in[a],length);
@@ -268,25 +319,33 @@ d3Vector centroidAverage(Triangle* a,int length)
         left = new BVHNode(in,a,i-a,de+1);
         right = new BVHNode(in,i,a+length-i,de+1);
     }
-    BVHNode::~BVHNode()
+    ~BVHNode()
     {
-       // delete[] array;
-       // delete left;
-       // delete right;
+        delete[] array;
+        delete left;
+        delete right;
     }
-    BVH::BVH()
+};
+class BVH
+{
+public:
+    int passnumber = 0;
+    int recipjitter = 3200;
+    Sphere* spherepointer = 0;
+    BVHNode* root = 0;
+    d3Vector ambientcolor = d3Vector(0,0,0);
+    BVH()
     {
         int a;
         int b;
         a = a+b;
-    }
-    BVH::BVH(Scene &in)
+    };
+    BVH(Scene &in)
     {
         std::cout<<"Constructing BVH"<<std::endl;
         spherepointer = in.spherepointer;
         int count = 0;
         Triangle* a = in.trianglepointer;
-        ambientcolor = in.ambientcolor;
         while(a->notnullflag)
         {
             count++;
@@ -296,21 +355,34 @@ d3Vector centroidAverage(Triangle* a,int length)
         root = new BVHNode(in.trianglepointer,0,count);
         std::cout<<"Done"<<std::endl;
     }
-    BVH::~BVH()
+    ~BVH()
     {
         delete root;
         delete spherepointer;
     }
-    ray::ray(d3Vector o,d3Vector v) : O(o),V(v) {};
-    d3Vector ray::endpoint()
+};
+struct hitdata
+{
+    bool hit;
+    float t;
+    d3Vector coord;
+    d3Vector normal;
+    Material material;
+};
+class ray
+{
+public:
+    d3Vector O,V;
+    ray(d3Vector o,d3Vector v) : O(o),V(v) {};
+    d3Vector endpoint()
     {
         return O.add(V);
     }
-    ray ray::rotatearoundorgin(int zenith,int attitude)
+    ray rotatearoundorgin(int zenith,int attitude)
     {
         return(ray(O.rotatearoundorgin(zenith,attitude),V.rotatearoundorgin(zenith,attitude)));
     }
-    ray ray::scalearound(ray cize)
+    ray scalearound(ray cize)
     {
         d3Vector endpt = endpoint();
         d3Vector orgin = this->O;
@@ -322,7 +394,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         orgin = orgin.add(cize.O);
         return ray(orgin,endpt.subtract(orgin));
     }
-    inline float ray::intersectwith(Sphere &sphere)
+    inline float intersectwith(Sphere &sphere)
     {
 
         float t = V.dot(sphere.pos.subtract(O));
@@ -345,7 +417,7 @@ d3Vector centroidAverage(Triangle* a,int length)
             return 0.0;
         }
     }
-    float ray::intersectwith(Triangle &triangle)
+    float intersectwith(Triangle &triangle)
     {
         // Algorithm credit to Tomas Moller and Ben Trumbore
         if(V.dot(triangle.normal)>0.0)return 0;
@@ -363,7 +435,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         if(v<0||u+v>1)return 0;
         return (edge2.dot(qvec))*invdet;
     }
-    hitdata ray::intersectwith(Scene &scene)
+    hitdata intersectwith(Scene &scene)
     {
         float lowestt = 1005;
         float hitcache;
@@ -416,7 +488,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         //lowesthit.material.diffuseglossy = sphere?1:0;
         return lowesthit;
     }
-    bool ray::intersectwith(d3Vector &mi,d3Vector &ma)
+    bool intersectwith(d3Vector &mi,d3Vector &ma)
     {
         float temp;
         float tmin = (mi.x-O.x)/V.x;
@@ -452,7 +524,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         if (tmax <= 0) return false;
         return true;
     }
-    inline hitdata ray::intersectwith(BVHNode &in,int d)
+    inline hitdata intersectwith(BVHNode &in,int d = 0)
     {
         hitdata cache;
         cache.hit = false;
@@ -504,7 +576,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         }
         return cache;
     }
-    inline hitdata ray::intersectwith(BVH &in)
+    inline hitdata intersectwith(BVH &in)
     {
         Sphere* sphereptr = in.spherepointer;
         Sphere* hitsphere = 0;
@@ -547,6 +619,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         }
         return BVHhit;
     }
+};
 #include "FileLoader.cpp"
 int p;
 int *g_seed = new int(clock()*p);
@@ -568,7 +641,7 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
 
     float xfraction = ((float)x)/((float)width);
     float yfraction = ((float)y)/((float)height);
-    xfraction-=0.5;
+    xfraction-=0.65;
     yfraction-=0.5;
     d3Vector finaldirection(xfraction,flength,-yfraction);
     finaldirection = finaldirection.normalize();
@@ -580,7 +653,12 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     return ray(d3Vector(0,-9,2).add(startdiff),finaldirection);
 
 }
-    d3vecImage::d3vecImage(int _x,int _y)
+class d3vecImage
+{
+public:
+    int x,y;
+    d3Vector **start;
+    d3vecImage(int _x,int _y)
     {
         x = _x;
         y = _y;
@@ -590,17 +668,23 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
             start[i] = new d3Vector[y];
             for(int j= 0;j<y;j++)
             {
-                start[i][j] = d3Vector(0,0,245);
+                start[i][j] = d3Vector(0,0,0);
             }
         }
     }
-    void d3vecImage::setpixel(int inx,int iny,d3Vector in)
+    void setpixel(int inx,int iny,d3Vector in)
     {
-        inx = inx<x?inx:x;
-        iny = iny<y?iny:y;
         start[inx][iny] = in;
     }
-    Camera::Camera(){};
+};
+class Camera
+{
+public:
+    d3Vector mx,my,mz,start;
+    float recipjitter;
+    float fdistance;
+    Camera(){};
+};
 ray MatrixRay(int x,int y,int height,int width, Camera &cam)
 {
     float xfraction = ((float)x)/((float)width)-((width/height)/2);
@@ -635,7 +719,6 @@ d3Vector trace(ray inray,BVH &scene,int depth)
     {
         return scene.ambientcolor;
     }
-    //return objecthit.normal.normalize().scalarmultiply(255.0);
     //return (abs(objecthit.normal.x)>abs(objecthit.normal.y)&&abs(objecthit.normal.x)>abs(objecthit.normal.z))?(d3Vector(255,0,0)):((abs(objecthit.normal.y)>abs(objecthit.normal.z)&&abs(objecthit.normal.y)>abs(objecthit.normal.x))?(d3Vector(0,255,0)):(d3Vector(0,0,255)));
     //return objecthit.normal.scalarmultiply(255);
     //return d3Vector(0,0,0);
@@ -692,7 +775,7 @@ d3Vector get_glossy_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen)
     return objectcolor.individualmultiply(trace(nextray,scen,depth - 1).scalarmultiply(0.003921568627));
 }
 bool insideflag = false;
-d3Vector get_transmit_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen,float ior)
+d3Vector get_transmit_color(int depth,hitdata &objecthit,ray &cameraray,BVH &scen,float ior = 1.3)
 {
     cameraray.V = cameraray.V.normalize();
     d3Vector normal = objecthit.normal;
@@ -745,7 +828,7 @@ Scene generateScene (char* str, Material &m)
     {
         spheres[i]->nextsphere = spheres[i+1];
     }
-    spheres[0]->nextsphere = 0;
+    spheres[1]->nextsphere = 0;
     proto.spherepointer = spheres[0];
     return proto;
 
@@ -761,7 +844,7 @@ d3Vector computePixel (int x,int y,BVH &seed,d3Vector old)
     //static int64_t passnumber = 0;
     int pass = seed.passnumber;
     d3Vector Pixel;
-    d3Vector Tracedcolor =trace(getCameraRay(x,y,500,500,1280,1,8.6),seed,4) ;
+    d3Vector Tracedcolor =trace(getCameraRay(x,y,1000,1000,1280,1,8.6),seed,4) ;
     Pixel = ((old.scalarmultiply(pass)).add(Tracedcolor)).scalarmultiply(1.0/(float)(1+pass));
     return Pixel;
 }//trace(getCameraRay(x,y,1000,1000,0,1,3),seed,5)
@@ -863,6 +946,14 @@ void dump(d3Vector **inImage,int width,int height)
     cin>>str2;
 }
 
+typedef struct
+{
+    BVH inBVH;
+    Camera precam;
+    d3vecImage* image;
+    int sx,sy,w,h;
+    HANDLE renderMutex;
+}renderable;
 DWORD WINAPI RenderForGui(LPVOID inparam)
 {
     renderable &in = *((renderable*)inparam);
@@ -871,14 +962,11 @@ DWORD WINAPI RenderForGui(LPVOID inparam)
     int yend = in.sy+in.h;
     int xend = in.sx+in.w;
     p = in.inBVH.passnumber;
-    srand(in.inBVH.passnumber);
     while(y<=yend)
     {
         while(x<=xend)
         {
-            in.image->setpixel(x,y,
-                              computePixel(x,y,in.inBVH,in.image->start[x][y])
-                              );//in.image->start[x][y]));
+            in.image->setpixel(x,y,computePixel(x,y,in.inBVH,(in.precam),in.image->start[x][y]));
             x++;
         }
         x = in.sx;
