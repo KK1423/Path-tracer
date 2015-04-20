@@ -22,20 +22,47 @@ int minint(int a,int b)
 }
 DWORD WINAPI updater(LPVOID in)
 {
-    LiveProcData &data = *((LiveProcData*)in);
+    LiveProcData* dat = ((LiveProcData*)in);
+    LiveProcData &data = *((LiveProcData*)GetWindowLong(dat->thisW,0));
     DWORD n = STILL_ACTIVE;
-    while(n==STILL_ACTIVE){Sleep(50);GetExitCodeThread(data.TLthread,&n);}
+    while(n==STILL_ACTIVE){
+        Sleep(50);
+        GetExitCodeThread(data.TLthread,&n);
+    }
     n = STILL_ACTIVE;
-    while(n==STILL_ACTIVE){Sleep(50);GetExitCodeThread(data.TRthread,&n);}
+    while(n==STILL_ACTIVE){GetExitCodeThread(data.TRthread,&n);}
     n = STILL_ACTIVE;
-    while(n==STILL_ACTIVE){Sleep(50);GetExitCodeThread(data.BLthread,&n);}
+    while(n==STILL_ACTIVE){GetExitCodeThread(data.BLthread,&n);}
     n = STILL_ACTIVE;
-    while(n==STILL_ACTIVE){Sleep(50);GetExitCodeThread(data.BRthread,&n);}
+    while(n==STILL_ACTIVE){GetExitCodeThread(data.BRthread,&n);}
     CloseHandle(data.TLthread);
     CloseHandle(data.TRthread);
     CloseHandle(data.BLthread);
     CloseHandle(data.BRthread);
+    while(data.stopped){Sleep(20);}
+    if(!IsWindow(data.thisW))
+        return 0;
+    if(data.changed)
+    {
+        data.currentRenderable->h = 250;
+        data.currentRenderable->w = 250;
+        data.currentRenderable->image = data.TL.image;
+        data.TL = *(data.currentRenderable);
+        data.TL.sx = 0;
+        data.TL.sy = 0;
+        data.TR = *(data.currentRenderable);
+        data.TR.sx = 250;
+        data.TR.sy = 0;
+        data.BR = *(data.currentRenderable);
+        data.BR.sx = 250;
+        data.BR.sy = 250;
+        data.BL = *(data.currentRenderable);
+        data.BL.sx = 0;
+        data.BL.sy = 250;
+        data.changed = false;
+    }
     BYTE* pbits = data.BMPptr;
+
     pbits--;
     for( int iRow=0; iRow<500 ; ++iRow )
         {
@@ -46,26 +73,32 @@ DWORD WINAPI updater(LPVOID in)
               switch(iCol%3)
               {
               case 0://Blue Channel
-                  *pbits =minint( (int)data.currentRenderable->image->start[iCol/3][500-iRow].z,255);
+                  *pbits =minint( (int)data.BL.image->start[iCol/3][500-iRow].z,255);
                 break;
               case 1://Green Channel
-                  *pbits =minint( (int)data.currentRenderable->image->start[iCol/3][500-iRow].y,255);
+                  *pbits =minint( (int)data.BL.image->start[iCol/3][500-iRow].y,255);
                 break;
               case 2://Red Channel
-                  *pbits =minint( (int)data.currentRenderable->image->start[iCol/3][500-iRow].x,255);
+                  *pbits =minint( (int)data.BL.image->start[iCol/3][500-iRow].x,255);
                 break;
               }
           }
         }
         RECT r;
         GetClientRect(data.thisW,&r);
+        DrawText(data.memDC,intToString(data.BL.inBVH.passnumber).c_str(),-1,&r,DT_SINGLELINE|DT_LEFT|DT_TOP);
+        RECT s = r;
+        s.top+=20;
+        DrawText(data.memDC,intToString((GetTickCount()-data.t)/100).c_str(),-1,&s,DT_SINGLELINE|DT_LEFT|DT_TOP);
         InvalidateRect(data.thisW,&r,true);
+        data.t = GetTickCount();
 
     data.TLthread = CreateThread(NULL,NULL,RenderForGui,(void*)&(data.TL),0,NULL);
     data.TRthread = CreateThread(NULL,NULL,RenderForGui,(void*)&(data.TR),0,NULL);
     data.BLthread = CreateThread(NULL,NULL,RenderForGui,(void*)&(data.BL),0,NULL);
     data.BRthread = CreateThread(NULL,NULL,RenderForGui,(void*)&(data.BR),0,NULL);
-        data.Updatethread = CreateThread(NULL,NULL,updater,(void*)&data,NULL,NULL);
+    CloseHandle(data.Updatethread);
+        data.Updatethread = CreateThread(NULL,NULL,updater,in,NULL,NULL);
 }
 void PaintPreview(HDC hdc,HBITMAP &i,HDC &memDC)
 {
@@ -74,7 +107,7 @@ void PaintPreview(HDC hdc,HBITMAP &i,HDC &memDC)
 LRESULT CALLBACK LivePreviewProc(HWND WinHandle, UINT message, WPARAM wparam, LPARAM lparam)
 {
     LiveProcData* data;
-    if(message==WM_PAINT||message==WM_DESTROY||message == WM_LBUTTONUP)
+    if(message==WM_PAINT||message==WM_DESTROY||message == WM_LBUTTONUP||message == UPDATEMSG||message == PAUSEMSG)
         data = (LiveProcData*)GetWindowLong(WinHandle,0);
     switch(message)
     {
@@ -131,6 +164,19 @@ LRESULT CALLBACK LivePreviewProc(HWND WinHandle, UINT message, WPARAM wparam, LP
         }
         break;
     case WM_LBUTTONUP:
+        break;
+    case UPDATEMSG:
+        {
+            data->currentRenderable = (renderable*)lparam;
+            data->changed = true;
+            return 0;
+        }
+        break;
+    case PAUSEMSG:
+        {
+            data->stopped = data->stopped?false:true;
+            return 0;
+        }
         break;
     case WM_DESTROY:
         return 0;

@@ -2,6 +2,8 @@
 #define LIVEPREVIEW_H_INCLUDED
 #include <windows.h>
 #include "main.h"
+#define UPDATEMSG 0x0401
+#define PAUSEMSG 0x0402
 void PaintPreview(HDC hdc,HBITMAP &i,HDC &memDC);
 void RegisterLiveClass();
 LRESULT CALLBACK LivePreviewProc(HWND WinHandle, UINT message, WPARAM wparam, LPARAM lparam);
@@ -17,6 +19,9 @@ typedef struct
 */
 typedef struct
 {
+    bool changed = false;
+    bool stopped = false;
+    DWORD t;
     renderable* currentRenderable;
     renderable TL;
     renderable TR;

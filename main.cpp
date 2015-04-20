@@ -348,7 +348,7 @@ d3Vector centroidAverage(Triangle* a,int length)
     float ray::intersectwith(Triangle &triangle)
     {
         // Algorithm credit to Tomas Moller and Ben Trumbore
-        if(V.dot(triangle.normal)>0.0)return 0;
+        //if(V.dot(triangle.normal)>0.0)return 0;
         d3Vector edge1 = triangle.b.subtract(triangle.a);
         d3Vector edge2 = triangle.c.subtract(triangle.a);
         d3Vector pvec = V.crossproduct(edge2);
@@ -452,7 +452,7 @@ d3Vector centroidAverage(Triangle* a,int length)
         if (tmax <= 0) return false;
         return true;
     }
-    inline hitdata ray::intersectwith(BVHNode &in,int d)
+    inline hitdata ray::intersectwith(BVHNode &in)
     {
         hitdata cache;
         cache.hit = false;
@@ -485,11 +485,11 @@ d3Vector centroidAverage(Triangle* a,int length)
         cache2.hit = false;
         if(intersectwith(in.left->mi,in.left->ma))
         {
-            cache = intersectwith(*in.left,d+1);
+            cache = intersectwith(*in.left);
         }
         if(intersectwith(in.right->mi,in.right->ma))
         {
-            cache2 = intersectwith(*in.right,d+1);
+            cache2 = intersectwith(*in.right);
             if(cache2.hit)
             {
                 if(cache.hit)
@@ -553,7 +553,7 @@ int *g_seed = new int(clock()*p);
 int getsignedrand()
 {
     *g_seed = (214013**g_seed+2531011);
-    return ((*g_seed>>16)&0x7FFF)%400;
+    return (((*g_seed>>16)&0x7FFF)%400);//-200;
 }
 int gesignedrand()
 {
@@ -603,9 +603,9 @@ ray getCameraRay (int x, int y, int width, int height, float recipjitter, float 
     Camera::Camera(){};
 ray MatrixRay(int x,int y,int height,int width, Camera &cam)
 {
-    float xfraction = ((float)x)/((float)width)-((width/height)/2);
-    float yfraction = ((float)y)/((float)height)-(height/2);
-    d3Vector direction((cam.my.scalarmultiply(xfraction)).add(cam.mz.scalarmultiply(yfraction)).add(cam.mx));
+    float xfraction = (((float)x)/500)-(0.5);
+    float yfraction = (((float)y)/(500))-(0.5);
+    d3Vector direction((cam.my.scalarmultiply(xfraction)).add(cam.mz.scalarmultiply(yfraction)).add(cam.mx.scalarmultiply(cam.flength)));
     direction = direction.normalize();
     d3Vector cache = direction.scalarmultiply(cam.fdistance);
     d3Vector startdiff(getsignedrand()/float(cam.recipjitter),getsignedrand()/float(cam.recipjitter),getsignedrand()/float(cam.recipjitter));
@@ -650,10 +650,10 @@ d3Vector trace(ray inray,BVH &scene,int depth)
         return get_transmit_color(depth,objecthit,inray,scene,1.1);
     }
     outcolor = get_diffuse_color(depth,objecthit,inray,scene);
-    if(objecthit.material.diffuseglossy!=1)
+    if(objecthit.material.diffuseglossy!=1.0)
     {
-        outcolor = outcolor.scalarmultiply((float)1 - objecthit.material.diffuseglossy);
-        outcolor = (outcolor).add(get_glossy_color(depth,objecthit,inray,scene).scalarmultiply(objecthit.material.diffuseglossy));
+        outcolor = outcolor.scalarmultiply(objecthit.material.diffuseglossy);
+        outcolor = (outcolor).add(get_glossy_color(depth,objecthit,inray,scene).scalarmultiply((float)1.0 - objecthit.material.diffuseglossy));
     } //objecthit.normal = objecthit.normal.normalize();
     return outcolor.add(getcolor(objecthit.material).scalarmultiply(objecthit.material.emission));
 }
@@ -761,7 +761,7 @@ d3Vector computePixel (int x,int y,BVH &seed,d3Vector old)
     //static int64_t passnumber = 0;
     int pass = seed.passnumber;
     d3Vector Pixel;
-    d3Vector Tracedcolor =trace(getCameraRay(x,y,500,500,1280,1,8.6),seed,4) ;
+    d3Vector Tracedcolor =trace(getCameraRay(x,y,500,500,100000,1,8.6),seed,4) ;
     Pixel = ((old.scalarmultiply(pass)).add(Tracedcolor)).scalarmultiply(1.0/(float)(1+pass));
     return Pixel;
 }//trace(getCameraRay(x,y,1000,1000,0,1,3),seed,5)
@@ -877,7 +877,7 @@ DWORD WINAPI RenderForGui(LPVOID inparam)
         while(x<=xend)
         {
             in.image->setpixel(x,y,
-                              computePixel(x,y,in.inBVH,in.image->start[x][y])
+                              computePixel(x,y,in.inBVH,in.precam,in.image->start[x][y])
                               );//in.image->start[x][y]));
             x++;
         }

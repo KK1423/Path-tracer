@@ -106,8 +106,11 @@ Camera guiCamera;
 #define PRE 37
 #define REN 38
 #define BHV 39
+#define PRD 41
+#define PAU 42
 using namespace std;
 HWND blockhandle = NULL;
+HWND previeww = NULL;
 LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPARAM lparam)
 {
     cout<<(int)message<<endl;
@@ -150,25 +153,26 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
 
         MakeButton("+FO",BS_AUTOCHECKBOX|WS_GROUP|WS_CHILD|WS_VISIBLE|WS_TABSTOP,10,70,100,20,PFO,WinHandle,0);
         MakeButton("+UP",BS_AUTOCHECKBOX|WS_GROUP|WS_CHILD|WS_VISIBLE|WS_TABSTOP,110,70,100,20,PUP,WinHandle,0);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,70,30,20,FOV,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("0.7",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,70,30,20,FOV,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         CreateWindow("STATIC","FOV:",WS_VISIBLE|WS_CHILD,210,70,40,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
 
 
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL, 60,90,30,20,CAX,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,160,90,30,20,CAY,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,90,30,20,CAZ,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("-6",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL, 60,90,30,20,CAX,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("0",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,160,90,30,20,CAY,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("2",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,90,30,20,CAZ,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         CreateWindow("STATIC","X:",WS_VISIBLE|WS_CHILD, 10,90,40,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
         CreateWindow("STATIC","Y:",WS_VISIBLE|WS_CHILD,110,90,40,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
         CreateWindow("STATIC","Z:",WS_VISIBLE|WS_CHILD,210,90,40,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
 
         MakeButton("Custom:",BS_AUTOCHECKBOX|WS_GROUP|WS_CHILD|WS_VISIBLE|WS_TABSTOP,10,110,100,20,CUS,WinHandle,0);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,160,110,30,20,AZI,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,110,30,20,ALT,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        CheckDlgButton(WinHandle,CUS,BST_CHECKED);
+        MakeButton("180",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,160,110,30,20,AZI,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("0",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,260,110,30,20,ALT,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         CreateWindow("STATIC","AZI:",WS_VISIBLE|WS_CHILD,110,110,30,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
         CreateWindow("STATIC","ALT:",WS_VISIBLE|WS_CHILD,210,110,40,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
 
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,110,130,50,20,APR,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,240,130,50,20,FDI,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("0.01",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,110,130,50,20,APR,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("6",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,240,130,50,20,FDI,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         CreateWindow("STATIC","Aperture",WS_VISIBLE|WS_CHILD,10,130,100,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
         CreateWindow("STATIC","Focus",WS_VISIBLE|WS_CHILD,160,130,70,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
 
@@ -204,7 +208,7 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                       );
 
         MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,95,360,40,20,ALP,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
-        MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,95,380,40,20,DIF,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
+        MakeButton("1.0",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,95,380,40,20,DIF,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,95,400,40,20,IOR,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         MakeButton("",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,95,420,40,20,EMI,WinHandle,0,"EDIT",WS_EX_CLIENTEDGE|WS_EX_WINDOWEDGE);
         CreateWindow("STATIC","Alpha:",WS_VISIBLE|WS_CHILD,10,360,75,20,WinHandle,NULL,GetModuleHandle(NULL),NULL);
@@ -264,6 +268,8 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
         MakeButton("Generate BVH",BS_PUSHBUTTON|WS_GROUP|WS_CHILD|WS_VISIBLE,305,30,280,40,BHV,WinHandle,0);
         MakeButton("Preview",BS_PUSHBUTTON|WS_GROUP|WS_CHILD|WS_VISIBLE,305,70,280,40,PRE,WinHandle,0);
         MakeButton("Render",BS_PUSHBUTTON|WS_GROUP|WS_CHILD|WS_VISIBLE,305,110,280,40,REN,WinHandle,0);
+        MakeButton("Update",BS_PUSHBUTTON|WS_GROUP|WS_CHILD|WS_VISIBLE,305,150,280,40,PRD,WinHandle,0);
+        MakeButton("Pause",BS_PUSHBUTTON|WS_GROUP|WS_CHILD|WS_VISIBLE,305,190,280,40,PAU,WinHandle,0);
         RegisterLiveClass();
 
 
@@ -278,8 +284,6 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                 {
 
                     char buffer[15] = {0};
-                    if(blockhandle!=NULL)
-                            SetBlockColor(blockhandle,RGB(rand()%255,rand()%255,rand()%255));
                     //if(guiCamera == 0)guiCamera = new Camera;
                     if(IsDlgButtonChecked(WinHandle,CUS))
                     {
@@ -287,21 +291,20 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                         float Azimuth = parsefrfloat(string(buffer));
                         GetWindowText(GetDlgItem(WinHandle,ALT),buffer,15);
                         float Attitude = parsefrfloat(string(buffer));
-                        float cosAz = cosf(Azimuth);
-                        float cosAt = cosf(Attitude);
-                        float sinAz = sinf(Azimuth);
-                        float sinAt = sinf(Attitude);
-                        guiCamera.mx = d3Vector(-cosAz*cosAt,sinAz,sinAt);
-                        guiCamera.my = d3Vector(sinAz,cosAz,0);
-                        guiCamera.mz = d3Vector(sinAt*cosAz,sinAt*sinAz,cosAt);
+                        float cosAz = cosf(Azimuth*0.0174532925);
+                        float cosAt = cosf(Attitude*0.0174532925);
+                        float sinAz = sinf(Azimuth*0.0174532925);
+                        float sinAt = sinf(Attitude*0.0174532925);
+                        guiCamera.mx = d3Vector(-cosAz*cosAt,sinAz,sinAt).normalize();
+                        guiCamera.my = d3Vector(-sinAz,-cosAz*cosAt,0).normalize();
+                        guiCamera.mz = d3Vector(guiCamera.my.crossproduct(guiCamera.mx)).normalize();
 
                     }else
                     {
-                        guiCamera.mx = d3Vector(IsDlgButtonChecked(WinHandle,XFO),IsDlgButtonChecked(WinHandle,YFO),IsDlgButtonChecked(WinHandle,ZFO)).normalize();
-                        guiCamera.mz = d3Vector(IsDlgButtonChecked(WinHandle,XUP),IsDlgButtonChecked(WinHandle,YUP),IsDlgButtonChecked(WinHandle,ZUP)).normalize();
+                        guiCamera.mx = d3Vector(IsDlgButtonChecked(WinHandle,XFO)?1:0,IsDlgButtonChecked(WinHandle,YFO)?1:0,IsDlgButtonChecked(WinHandle,ZFO)?1:0).normalize().scalarmultiply(IsDlgButtonChecked(WinHandle,PFO)?1:-1);
+                        guiCamera.mz = d3Vector(IsDlgButtonChecked(WinHandle,XUP)?1:0,IsDlgButtonChecked(WinHandle,YUP)?1:0,IsDlgButtonChecked(WinHandle,ZUP)?1:0).normalize().scalarmultiply(IsDlgButtonChecked(WinHandle,PUP)?1:-1);
                         guiCamera.my = (guiCamera.mx.crossproduct(guiCamera.mz)).normalize();
                     }
-
                         GetWindowText(GetDlgItem(WinHandle,CAX),buffer,15);
                         guiCamera.start = d3Vector(parsefrfloat(string(buffer)));
                         GetWindowText(GetDlgItem(WinHandle,CAY),buffer,15);
@@ -312,6 +315,13 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                         guiCamera.fdistance = parsefrfloat(string(buffer));
                         GetWindowText(GetDlgItem(WinHandle,APR),buffer,15);
                         guiCamera.recipjitter = 400.0/parsefrfloat(string(buffer));
+                        GetWindowText(GetDlgItem(WinHandle,FOV),buffer,15);
+                        guiCamera.flength = parsefrfloat(string(buffer));
+                        Camera cadcADS = guiCamera;
+
+                        int a;
+                        int b;
+                        a = a+b;
                     break;
                 }
             case ADD:
@@ -344,6 +354,7 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                     guiScene = generateScene(buffer,m);
                     surfacecolor = ((ColorBlockData*)GetWindowLong(GetDlgItem(WinHandle,AMC),0))->currentcolor;
                     guiScene.ambientcolor = d3Vector(GetRValue(surfacecolor),GetGValue(surfacecolor),GetBValue(surfacecolor));
+                    guiBvh = BVH(guiScene);
                     break;
                 }
             case BHV:
@@ -358,7 +369,83 @@ LRESULT CALLBACK MessageHandler(HWND WinHandle, UINT message, WPARAM wparam, LPA
                     r->precam = guiCamera;
                     r->inBVH.spherepointer = new Sphere(10,0,0,15,Material(1,1,1,255,255,255,5));
                     r->inBVH.spherepointer->nextsphere = 0;
-                    CreateWindowEx(WS_EX_CLIENTEDGE|WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW,"LivePreview","Preview",WS_VISIBLE|WS_DLGFRAME|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,500,500,WinHandle,NULL,GetModuleHandle(NULL),r);
+                    previeww = CreateWindowEx(WS_EX_CLIENTEDGE|WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW|WS_EX_TOPMOST,"LivePreview","Preview",WS_VISIBLE|WS_DLGFRAME|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,510,539,WinHandle,NULL,GetModuleHandle(NULL),r);
+                    break;
+                }
+            case OBU:
+                {
+                    char buffer[15] = {0};
+                    Triangle* trptr = guiScene.trianglepointer;
+                    d3Vector o;
+                    float s;
+                    GetWindowText(GetDlgItem(WinHandle,OBX),buffer,15);
+                    o.x = parsefrfloat(string(buffer));
+                    GetWindowText(GetDlgItem(WinHandle,OBY),buffer,15);
+                    o.y = parsefrfloat(string(buffer));
+                    GetWindowText(GetDlgItem(WinHandle,OBZ),buffer,15);
+                    o.z = parsefrfloat(string(buffer));
+                    GetWindowText(GetDlgItem(WinHandle,SCA),buffer,15);
+                    s = parsefrfloat(string(buffer));
+                    d3Vector ca,cb,cc;
+                    while(trptr->notnullflag)
+                    {
+                        ca = (trptr->a.scalarmultiply(s)).add(o);
+                        cb = (trptr->b.scalarmultiply(s)).add(o);
+                        cc = (trptr->c.scalarmultiply(s)).add(o);
+                        *trptr = Triangle(ca,cb,cc,trptr->material);
+                        trptr++;
+                    }
+                    //int pnum = guiBvh.passnumber;
+                    guiBvh = BVH(guiScene);
+                    //guiBvh.passnumber = pnum;
+                    /*renderable* r = new renderable;
+                    r->inBVH = BVH(guiScene);
+                    r->precam = guiCamera;
+                    r->inBVH.passnumber = 0;
+                    r->inBVH.spherepointer = new Sphere(10,0,0,15,Material(1,1,1,255,255,255,5));
+                    r->inBVH.spherepointer->nextsphere = 0;
+                    SendMessage(previeww,UPDATEMSG,0,(LPARAM)r);
+                    */
+                    SendMessageA(WinHandle,WM_COMMAND,UPD,0);
+                    renderable* r = new renderable;
+                    r->inBVH = guiBvh;
+                    r->precam = guiCamera;
+                    r->inBVH.passnumber = 0;
+                    r->inBVH.spherepointer = new Sphere(10,0,0,15,Material(1,1,1,255,255,255,5));
+                    r->inBVH.spherepointer->nextsphere = 0;
+                    SendMessage(previeww,UPDATEMSG,0,(LPARAM)r);
+                    break;
+                }
+            case PAU:
+                {
+                    SendMessage(previeww,PAUSEMSG,0,0);
+                }
+                break;
+            case PRD:
+                {
+                    SendMessageA(WinHandle,WM_COMMAND,UPD,0);
+                    renderable* r = new renderable;
+                    r->inBVH = guiBvh;
+                    r->precam = guiCamera;
+                    r->inBVH.passnumber = 0;
+                    r->inBVH.spherepointer = new Sphere(10,0,0,15,Material(1,1,1,255,255,255,5));
+                    r->inBVH.spherepointer->nextsphere = 0;
+                    SendMessage(previeww,UPDATEMSG,0,(LPARAM)r);
+                    break;
+                }
+            case CAX:
+            case AZI:
+            case ALT:
+            case CAY:
+            case CAZ:
+            case FDI:
+            case APR:
+            case FOV:
+                {
+                    if(HIWORD(wparam)==EN_CHANGE)
+                    {
+                        SendMessageA(WinHandle,WM_COMMAND,PRD,0);
+                    }
                     break;
                 }
             }

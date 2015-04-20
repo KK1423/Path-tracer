@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1428558798 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
+1429478762 source:c:\users\karth_000\documents\github\path-tracer\main.cpp
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -12,7 +12,7 @@
 	"LinkedList.cpp"
 	"FileLoader.cpp"
 
-1428544409 c:\users\karth_000\documents\github\path-tracer\main.h
+1429478701 c:\users\karth_000\documents\github\path-tracer\main.h
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -24,7 +24,7 @@
 
 1426450127 c:\users\karth_000\documents\github\path-tracer\linkedlist.cpp
 
-1427328595 c:\users\karth_000\documents\github\path-tracer\fileloader.cpp
+1429474620 c:\users\karth_000\documents\github\path-tracer\fileloader.cpp
 	<iostream>
 	<stdlib.h>
 	<math.h>
@@ -44,21 +44,21 @@
 
 1428287803 c:\users\karth_000\documents\github\path-tracer\colorpicker.h
 
-1428460826 source:c:\users\karth_000\documents\github\path-tracer\gux.cpp
-	<windows.h>
-	<iostream>
-	<math.h>
-	"main.h"
-	"ColorPicker.h"
+1429478913 source:c:\users\karth_000\documents\github\path-tracer\livepreview.cpp
 	"LivePreview.h"
 
-1428461124 c:\users\karth_000\documents\github\path-tracer\livepreview.h
+1429474620 c:\users\karth_000\documents\github\path-tracer\livepreview.h
 	<windows.h>
 	"main.h"
 
 1427339905 source:c:\users\karth_000\documents\github\path-tracer\resources.rc
 	<windows.h>
 
-1428547721 source:c:\users\karth_000\documents\github\path-tracer\livepreview.cpp
+1429478868 source:c:\users\karth_000\documents\github\path-tracer\gux.cpp
+	<windows.h>
+	<iostream>
+	<math.h>
+	"main.h"
+	"ColorPicker.h"
 	"LivePreview.h"
 

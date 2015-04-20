@@ -138,7 +138,7 @@ public:
     float intersectwith(Triangle &triangle);
     hitdata intersectwith(Scene &scene);
     bool intersectwith(d3Vector &mi,d3Vector &ma);
-    inline hitdata intersectwith(BVHNode &in,int d = 0);
+    inline hitdata intersectwith(BVHNode &in);
     inline hitdata intersectwith(BVH &in);
 };
 int getsignedrand();
@@ -158,6 +158,7 @@ public:
     d3Vector mx,my,mz,start;
     float recipjitter;
     float fdistance;
+    float flength;
     Camera();
 };
 ray MatrixRay(int x,int y,int height,int width, Camera &cam);
